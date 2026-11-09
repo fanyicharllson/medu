@@ -1,0 +1,29 @@
+Medumba lexicon - built 2026-11-07
+
+Unique entries (word + word class): 2249
+  with a French meaning:              1963
+  with a checked English meaning:     184
+  with an auto English meaning:       924
+  with any English meaning:           1108
+  with no meaning yet:                230
+
+Rows read per source:
+  apertium-byv (lexc)         1837
+  apertium-byv-fra (dix)      1757
+  word list (English)         102
+  fra-byv-eng list            85
+
+Entries per word class:
+  n     1026
+  v     722
+  adj   102
+  prn   86
+  misc  58
+  adv   49
+  pr    45
+  cnj   41
+  ij    37
+  part  35
+  num   22
+  np    15
+  det   11

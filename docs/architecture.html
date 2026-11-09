@@ -1,0 +1,412 @@
+<title>Medu Compiler Architecture</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Noto+Sans:wght@400;600;700&family=Noto+Sans+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column with two wide diagram bands. Palette borrows Ndop cloth: indigo + undyed white, ochre for data. */
+:root{
+  --bg:#f6f7fb; --surface:#ffffff; --fg:#161a2e; --muted:#5a6078; --line:#d3d8e6;
+  --indigo:#2b3a8f; --indigo-soft:#e5e9f8; --ochre:#a8600f; --ochre-soft:#f7ebda;
+  --green:#1d6b4a; --green-soft:#e2f2ea;
+  --err:#b3261e; --err-soft:#fbe8e6; --ok:#1d7a46; --term-bg:#12152a; --term-fg:#e6e8f2; --term-dim:#8d93b3;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Noto Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"Noto Sans Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1121; --surface:#161a2f; --fg:#e7e9f3; --muted:#9aa0bb; --line:#2b3150;
+  --indigo:#93a3ff; --indigo-soft:#1d2450; --ochre:#e7a75e; --ochre-soft:#3a2a17;
+  --green:#7fd6ad; --green-soft:#16352a;
+  --err:#ff8f86; --err-soft:#3b1d1b; --ok:#6fd49b; --term-bg:#080a15; --term-fg:#e6e8f2; --term-dim:#8d93b3; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1121; --surface:#161a2f; --fg:#e7e9f3; --muted:#9aa0bb; --line:#2b3150;
+  --indigo:#93a3ff; --indigo-soft:#1d2450; --ochre:#e7a75e; --ochre-soft:#3a2a17;
+  --green:#7fd6ad; --green-soft:#16352a;
+  --err:#ff8f86; --err-soft:#3b1d1b; --ok:#6fd49b; --term-bg:#080a15; --term-fg:#e6e8f2; --term-dim:#8d93b3; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:16px;line-height:1.6;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:40px 64px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:52px}
+.col{max-width:700px}
+h1,h2{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:clamp(2.2rem,5vw,3.3rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.6rem;font-weight:800}
+p{margin:0}
+section{display:flex;flex-direction:column;gap:16px}
+.eyebrow{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--indigo);font-weight:700}
+.lede{font-size:1.12rem;color:var(--muted);max-width:65ch}
+.mw{font-weight:600;color:var(--ochre)}
+code{font-family:var(--f-mono);font-size:.9em}
+.muted{color:var(--muted)}
+.byline{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:.92rem;color:var(--muted);border-top:1px solid var(--line);padding-top:14px}
+.byline b{color:var(--fg)}
+
+.term{background:var(--term-bg);color:var(--term-fg);border-radius:10px;padding:14px 16px;font-family:var(--f-mono);font-size:.86rem;line-height:1.55;overflow-x:auto;white-space:pre;margin:0}
+.term .p{color:var(--term-dim)} .term .c{color:#9fb0ff} .term .o{color:#8fe3b0} .term .e{color:#ff9d94} .term .w{color:#f2c27a}
+.pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.pair > div{min-width:0;display:flex;flex-direction:column;gap:8px}
+.label{font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;overflow-x:auto}
+.diagram svg{display:block;min-width:940px;width:100%;height:auto}
+svg text{font-family:var(--f-body);fill:var(--fg)}
+svg .sm{font-size:11px;fill:var(--muted)}
+svg .ttl{font-size:14px;font-weight:700}
+svg .num{font-family:var(--f-display);font-size:13px;font-weight:800;fill:var(--indigo)}
+svg .lane{font-size:11px;font-weight:700;letter-spacing:.1em;fill:var(--indigo)}
+svg .lane-g{font-size:11px;font-weight:700;letter-spacing:.1em;fill:var(--green)}
+svg .box{fill:var(--surface);stroke:var(--line);stroke-width:1.5}
+svg .front{fill:var(--indigo-soft);stroke:var(--indigo);stroke-width:1.5}
+svg .bafut{fill:var(--green-soft);stroke:var(--green);stroke-width:1.5}
+svg .data{fill:var(--ochre-soft);stroke:var(--ochre);stroke-width:1.5}
+svg .out{fill:var(--surface);stroke:var(--ok);stroke-width:1.5}
+svg .errbar{fill:var(--err-soft);stroke:var(--err);stroke-width:1.5}
+svg .arrow{stroke:var(--fg);stroke-width:1.6;fill:none}
+svg .arrow-d{stroke:var(--ochre);stroke-width:1.6;fill:none}
+svg .dash{stroke:var(--err);stroke-width:1.3;fill:none;stroke-dasharray:5 4}
+svg .bracket{stroke:var(--indigo);stroke-width:1.2;fill:none}
+svg .ah{fill:var(--fg)} svg .ahd{fill:var(--ochre)} svg .ahe{fill:var(--err)}
+svg .errt{fill:var(--err);font-weight:700;font-size:13px}
+svg .okt{fill:var(--ok);font-weight:700;font-size:14px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:14px;height:14px;border-radius:3px;border:1.5px solid}
+
+.trace{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface)}
+.step{display:grid;grid-template-columns:170px 1fr;gap:14px;padding:11px 16px;border-top:1px solid var(--line);align-items:baseline}
+.step:first-child{border-top:0}
+.step .s{font-family:var(--f-display);font-weight:800;color:var(--indigo)}
+.step > div{min-width:0}
+.step code{display:inline-block;max-width:100%;overflow-x:auto;white-space:nowrap;vertical-align:bottom}
+@media (max-width:620px){.step{grid-template-columns:1fr;gap:2px}}
+
+table{border-collapse:collapse;width:100%;font-size:.92rem}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+th,td{text-align:left;padding:10px 14px;border-top:1px solid var(--line);vertical-align:top}
+thead th{border-top:0;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.st{display:inline-block;white-space:nowrap;font-family:var(--f-display);font-weight:800;font-size:.85rem;color:var(--indigo);background:var(--indigo-soft);border-radius:6px;padding:1px 7px}
+.st.d{color:var(--ochre);background:var(--ochre-soft)}
+.why{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.why div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;min-width:0}
+.why b{display:block;font-family:var(--f-display);margin-bottom:2px}
+</style>
+
+<div class="wrap">
+
+<header style="display:flex;flex-direction:column;gap:16px">
+  <span class="eyebrow">Compiler Construction project · architecture</span>
+  <h1>Medu: a compiler for Medumba</h1>
+  <p class="lede">Medu reads <span class="mw">Mə̀dʉ̂mbɑ̀</span> (the language of Bangangté), checks it for syntax errors, and translates it into English. Next step: a dual compiler that also understands Bafut.</p>
+  <div class="byline">
+    <span>Project lead &amp; architect: <b>Fanyi Charllson</b></span>
+    <span>Dictionary: <b>2,249</b> Medumba entries</span>
+    <span>Python · open source (GPL-3.0)</span>
+  </div>
+</header>
+
+<section>
+  <span class="eyebrow">How you use it</span>
+  <h2>Like Python, but you write Medumba</h2>
+  <p class="col">Write Medumba in a text file, save it, and run <code>medu</code> in a terminal. Medu checks the file and prints the result. Typing <code>medu</code> on its own opens an interactive prompt.</p>
+  <div class="pair">
+    <div>
+      <span class="label">Mode 1 · programs (<code>.med</code>)</span>
+<pre class="term">lɛn = "Emperor"
+<span class="w">&lt;print&gt;</span>(lɛn)        <span class="p"># keyword chosen with a speaker</span>
+
+<span class="p">&gt;</span> <span class="c">medu run hello.med</span>
+<span class="p">English:</span> print(name)
+<span class="p">Output:</span>  <span class="o">Emperor</span></pre>
+    </div>
+    <div>
+      <span class="label">Mode 2 · sentences (<code>.mdt</code>)</span>
+<pre class="term">mə nɛn zi.
+
+<span class="p">&gt;</span> <span class="c">medu translate story.mdt</span>
+<span class="o">I am sleeping.</span>
+
+<span class="p">medu&gt;</span> mə zii
+<span class="e">error: unknown word 'zii' (line 1, col 4)</span>
+<span class="w">  did you mean 'zi' (sleep)?</span></pre>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">The architecture</span>
+  <h2>Six stations, one job each</h2>
+  <p class="col">Text goes in on the left. Each station does one thing and passes its result on. Stations ① and ② are shared by both modes. Any station can stop the line and report an error.</p>
+  <div class="diagram" role="img" aria-label="Medu pipeline: source file, cleaner, word cutter fed by the lexicon, then Mode 1 (code parser, checker, interpreter) and Mode 2 (grammar check, sense check, meaning, English writer), all reporting errors.">
+  <svg viewBox="0 0 1100 560" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+      <marker id="ad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ahd"/></marker>
+      <marker id="ae" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ahe"/></marker>
+    </defs>
+    <path class="bracket" d="M160,206 v-8 h270 v8"/>
+    <text x="295" y="190" text-anchor="middle" class="lane">SHARED FRONT · WRITTEN ONCE</text>
+
+    <rect x="20" y="230" width="112" height="76" rx="8" class="box"/>
+    <text x="76" y="258" text-anchor="middle" class="ttl">Source file</text>
+    <text x="76" y="276" text-anchor="middle" class="sm">hello.med</text>
+    <text x="76" y="292" text-anchor="middle" class="sm">story.mdt</text>
+
+    <rect x="160" y="230" width="120" height="76" rx="8" class="front"/>
+    <text x="172" y="250" class="num">①</text>
+    <text x="220" y="262" text-anchor="middle" class="ttl">Cleaner</text>
+    <text x="220" y="280" text-anchor="middle" class="sm">same letters,</text>
+    <text x="220" y="294" text-anchor="middle" class="sm">same tone marks</text>
+
+    <rect x="310" y="230" width="120" height="76" rx="8" class="front"/>
+    <text x="322" y="250" class="num">②</text>
+    <text x="370" y="262" text-anchor="middle" class="ttl">Word cutter</text>
+    <text x="370" y="280" text-anchor="middle" class="sm">lexer: words +</text>
+    <text x="370" y="294" text-anchor="middle" class="sm">labels → tokens</text>
+    <path class="arrow" d="M132,268 H158" marker-end="url(#a)"/>
+    <path class="arrow" d="M280,268 H308" marker-end="url(#a)"/>
+
+    <path class="data" d="M310,380 a60,12 0 0,1 120,0 v58 a60,12 0 0,1 -120,0 z"/>
+    <path class="arrow-d" d="M310,380 a60,12 0 0,0 120,0"/>
+    <text x="370" y="412" text-anchor="middle" class="ttl">lexicon.json</text>
+    <text x="370" y="430" text-anchor="middle" class="sm">2,249 entries</text>
+    <path class="arrow-d" d="M370,368 V310" marker-end="url(#ad)"/>
+    <text x="378" y="344" class="sm">looks up</text>
+
+    <rect x="130" y="384" width="150" height="62" rx="8" class="data"/>
+    <text x="205" y="406" text-anchor="middle" class="ttl">Word sources</text>
+    <text x="205" y="423" text-anchor="middle" class="sm">Apertium data +</text>
+    <text x="205" y="437" text-anchor="middle" class="sm">speaker corrections</text>
+    <path class="arrow-d" d="M280,415 H308" marker-end="url(#ad)"/>
+
+    <path class="arrow" d="M430,268 H458"/>
+    <path class="arrow" d="M458,268 V128 H488" marker-end="url(#a)"/>
+    <path class="arrow" d="M458,268 H488" marker-end="url(#a)"/>
+
+    <text x="490" y="74" class="lane">MODE 1 · PROGRAMS (.med)</text>
+    <rect x="490" y="90" width="124" height="76" rx="8" class="box"/>
+    <text x="502" y="110" class="num">③</text>
+    <text x="552" y="122" text-anchor="middle" class="ttl">Code parser</text>
+    <text x="552" y="140" text-anchor="middle" class="sm">assign, print,</text>
+    <text x="552" y="154" text-anchor="middle" class="sm">if, repeat → tree</text>
+    <rect x="640" y="90" width="124" height="76" rx="8" class="box"/>
+    <text x="652" y="110" class="num">④</text>
+    <text x="702" y="122" text-anchor="middle" class="ttl">Checker</text>
+    <text x="702" y="140" text-anchor="middle" class="sm">variable exists?</text>
+    <text x="702" y="154" text-anchor="middle" class="sm">types match?</text>
+    <rect x="790" y="90" width="124" height="76" rx="8" class="box"/>
+    <text x="852" y="122" text-anchor="middle" class="ttl">Interpreter</text>
+    <text x="852" y="140" text-anchor="middle" class="sm">runs the program</text>
+    <text x="852" y="154" text-anchor="middle" class="sm">+ English version</text>
+    <rect x="940" y="90" width="140" height="76" rx="8" class="out"/>
+    <text x="1010" y="122" text-anchor="middle" class="okt">Output</text>
+    <text x="1010" y="142" text-anchor="middle" class="sm">"Emperor"</text>
+    <text x="1010" y="156" text-anchor="middle" class="sm">print(name)</text>
+    <path class="arrow" d="M614,128 H638" marker-end="url(#a)"/>
+    <path class="arrow" d="M764,128 H788" marker-end="url(#a)"/>
+    <path class="arrow" d="M914,128 H938" marker-end="url(#a)"/>
+
+    <text x="490" y="218" class="lane">MODE 2 · SENTENCES (.mdt)</text>
+    <rect x="490" y="230" width="124" height="76" rx="8" class="box"/>
+    <text x="502" y="250" class="num">③</text>
+    <text x="552" y="262" text-anchor="middle" class="ttl">Grammar check</text>
+    <text x="552" y="280" text-anchor="middle" class="sm">parser: word order</text>
+    <text x="552" y="294" text-anchor="middle" class="sm">rules → tree</text>
+    <rect x="640" y="230" width="124" height="76" rx="8" class="box"/>
+    <text x="652" y="250" class="num">④</text>
+    <text x="702" y="262" text-anchor="middle" class="ttl">Sense check</text>
+    <text x="702" y="280" text-anchor="middle" class="sm">one tense? verb</text>
+    <text x="702" y="294" text-anchor="middle" class="sm">has its object?</text>
+    <rect x="790" y="230" width="124" height="76" rx="8" class="box"/>
+    <text x="802" y="250" class="num">⑤</text>
+    <text x="852" y="262" text-anchor="middle" class="ttl">Meaning (IR)</text>
+    <text x="852" y="280" text-anchor="middle" class="sm">who · action · when</text>
+    <text x="852" y="294" text-anchor="middle" class="sm">no language</text>
+    <rect x="940" y="230" width="140" height="76" rx="8" class="box"/>
+    <text x="952" y="250" class="num">⑥</text>
+    <text x="1010" y="262" text-anchor="middle" class="ttl">English writer</text>
+    <text x="1010" y="280" text-anchor="middle" class="sm">word order, "am",</text>
+    <text x="1010" y="294" text-anchor="middle" class="sm">"-ing", "did not"</text>
+    <rect x="940" y="340" width="140" height="56" rx="8" class="out"/>
+    <text x="1010" y="364" text-anchor="middle" class="okt">Output</text>
+    <text x="1010" y="382" text-anchor="middle" class="sm">"I am sleeping."</text>
+    <path class="arrow" d="M614,268 H638" marker-end="url(#a)"/>
+    <path class="arrow" d="M764,268 H788" marker-end="url(#a)"/>
+    <path class="arrow" d="M914,268 H938" marker-end="url(#a)"/>
+    <path class="arrow" d="M1010,306 V338" marker-end="url(#a)"/>
+
+    <rect x="160" y="490" width="760" height="50" rx="8" class="errbar"/>
+    <text x="540" y="512" text-anchor="middle" class="errt">Error reporter</text>
+    <text x="540" y="530" text-anchor="middle" class="sm">line + column · what went wrong · "did you mean…?"</text>
+    <path class="dash" d="M220,306 V488" marker-end="url(#ae)"/>
+    <path class="dash" d="M430,296 H446 V488" marker-end="url(#ae)"/>
+    <path class="dash" d="M552,306 V488" marker-end="url(#ae)"/>
+    <path class="dash" d="M702,306 V488" marker-end="url(#ae)"/>
+    <path class="dash" d="M614,152 H627 V488" marker-end="url(#ae)"/>
+    <path class="dash" d="M764,152 H777 V488" marker-end="url(#ae)"/>
+  </svg>
+  </div>
+  <div class="legend">
+    <span><i class="sw" style="background:var(--indigo-soft);border-color:var(--indigo)"></i>Shared by both modes</span>
+    <span><i class="sw" style="background:var(--surface);border-color:var(--line)"></i>Mode-specific</span>
+    <span><i class="sw" style="background:var(--ochre-soft);border-color:var(--ochre)"></i>Data</span>
+    <span><i class="sw" style="background:var(--err-soft);border-color:var(--err)"></i>Errors</span>
+    <span><i class="sw" style="background:var(--surface);border-color:var(--ok)"></i>Result</span>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">One sentence, start to finish</span>
+  <h2><span class="mw">mə nɛn zi</span> → "I am sleeping."</h2>
+  <div class="trace">
+    <div class="step"><div class="s">① Cleaner</div><div>Standard letters and tone marks: <code>mə nɛn zi</code></div></div>
+    <div class="step"><div class="s">② Word cutter</div><div><code>[PRONOUN mə "I"] [PROGRESSIVE nɛn] [VERB zi "sleep"]</code></div></div>
+    <div class="step"><div class="s">③ Grammar check</div><div>Rule <code>Subject [Tense] [Negation] Verb [Object]</code> ✓</div></div>
+    <div class="step"><div class="s">④ Sense check</div><div>One tense marker; <span class="mw">zi</span> needs no object ✓</div></div>
+    <div class="step"><div class="s">⑤ Meaning</div><div><code>{who: I, action: SLEEP, time: NOW_ONGOING}</code></div></div>
+    <div class="step"><div class="s">⑥ English writer</div><div><b>"I am sleeping."</b></div></div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Typing Medumba</span>
+  <h2>No special keyboard needed</h2>
+  <p class="col">Keyboards don't have ə, ɛ, ʉ, ɑ, ŋ, ʼ or tone marks, so Medu accepts plain letters and works out the real word. Of the 2,023 distinct words in the dictionary, about two-thirds still have exactly one match when typed this way; for the rest, the grammar picks the one that fits.</p>
+  <div class="pair">
+    <div>
+      <span class="label">Type plain letters</span>
+<pre class="term"><span class="p">medu&gt;</span> me nen zi
+<span class="o">I am sleeping.</span>
+<span class="p">  (read as: mə nɛ̌n zi)</span>
+
+<span class="p">&gt;</span> <span class="c">medu fmt story.mdt</span>
+<span class="p">rewrote 1 line:</span> me nen zi → mə nɛ̌n zi</pre>
+    </div>
+    <div>
+      <span class="label">Or use shortcuts for the real letters</span>
+      <div class="tbl"><table>
+        <thead><tr><th>Type</th><th>Get</th><th>Type</th><th>Get</th></tr></thead>
+        <tbody>
+          <tr><td><code>e*</code></td><td>ə</td><td><code>o+</code></td><td>ɔ</td></tr>
+          <tr><td><code>e+</code></td><td>ɛ</td><td><code>n*</code></td><td>ŋ</td></tr>
+          <tr><td><code>u*</code></td><td>ʉ</td><td><code>'</code></td><td>ʼ</td></tr>
+          <tr><td><code>a*</code></td><td>ɑ</td><td colspan="2" class="muted">Tones are optional</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="why">
+    <div><b>① Cleaner</b>Turns shortcuts into real letters (<code>e*</code> → ə).</div>
+    <div><b>② Word cutter</b>Matches the plain spelling and keeps every possible word.</div>
+    <div><b>③ Grammar check</b>Keeps the word that fits the sentence and notes any doubt.</div>
+    <div><b>medu fmt</b>Rewrites a file in correct spelling, like gofmt for Go.</div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Hard cases</span>
+  <h2>Real problems, and how Medu handles them</h2>
+  <p class="col">The examples come from our actual dictionary. The last column shows which station in the diagram handles each case.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Problem</th><th>Example</th><th>How Medu handles it</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td>No special letters on the keyboard</td><td><code>me nen zi</code></td><td>Matches plain letters; <code>medu fmt</code> fixes the spelling</td><td><span class="st">① ②</span></td></tr>
+      <tr><td>Tone changes the meaning</td><td><span class="mw">zi</span> sleep · <span class="mw">zǐ</span> begin</td><td>A typed tone wins. Without tones, the grammar picks and Medu notes the other option</td><td><span class="st">② ③</span></td></tr>
+      <tr><td>One word, several jobs</td><td><span class="mw">mbwə</span> goat / in front of / cook</td><td>Keeps every candidate; the parser picks by position in the sentence</td><td><span class="st">② ③</span></td></tr>
+      <tr><td>Word not in the dictionary</td><td>a new or rare word</td><td>Shown as <code>[word]</code> with "did you mean…?", saved to a list; a speaker adds it with <code>medu learn</code></td><td><span class="st">②</span> <span class="st d">data</span></td></tr>
+      <tr><td>Different spellings</td><td>old spelling systems, other villages (<span class="mw">jʉ</span> / <span class="mw">di</span> "eat")</td><td>A <code>variants</code> field maps them to the standard spelling, with a note</td><td><span class="st">②</span> <span class="st d">data</span></td></tr>
+      <tr><td>Plurals change the prefix</td><td>noun classes, e.g. class 1 singular, class 6 plural</td><td>The word cutter splits prefix and root using the noun class</td><td><span class="st">②</span></td></tr>
+      <tr><td>Sentence pattern with no rule yet</td><td>a long or unusual sentence</td><td>Rough word-by-word translation plus a warning, saved so we can add the rule</td><td><span class="st">③ ⑥</span></td></tr>
+      <tr><td>French, English or Pidgin mixed in</td><td>"mə nɛ̌n zi <i>today</i>"</td><td>Recognised from small word lists and passed through unchanged</td><td><span class="st">②</span></td></tr>
+      <tr><td>Names and numbers</td><td>Ariane, 2026</td><td>A capitalised unknown word is treated as a name; digits stay as they are</td><td><span class="st">② ⑥</span></td></tr>
+      <tr><td>English grammar details</td><td>eat → ate, child → children</td><td>A small table of irregular English forms</td><td><span class="st">⑥</span></td></tr>
+      <tr><td>Doubtful meaning in the dictionary</td><td>auto-English "bairn" for <span class="mw">mɛn</span> (children)</td><td>Unreviewed meanings are marked <code>?</code> in the output until a speaker confirms them</td><td><span class="st d">data</span> <span class="st">⑥</span></td></tr>
+      <tr><td>Old Windows terminal shows boxes</td><td>ʉ ɛ ŋ appear as ▯</td><td>Medu prints UTF-8; <code>--ascii</code> prints plain letters instead</td><td><span class="st">output</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section>
+  <span class="eyebrow">Proposal</span>
+  <h2>Medu as a dual compiler: Medumba and Bafut</h2>
+  <p class="col">Station ⑤ writes meaning in no particular language, so a second language only needs its own front stations and dictionary. The meaning and English stations are reused as they are. Medu picks the right front from the file extension or detects the language by itself.</p>
+  <div class="diagram" role="img" aria-label="Dual compiler: a Medumba front and a Bafut front, each with its own dictionary, feed one shared meaning station and English writer; Medumba and Bafut can also be translated into each other.">
+  <svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    </defs>
+    <text x="20" y="26" class="lane">MEDUMBA FRONT (built now)</text>
+    <rect x="20" y="38" width="120" height="58" rx="8" class="box"/>
+    <text x="80" y="64" text-anchor="middle" class="ttl">story.mdt</text>
+    <text x="80" y="82" text-anchor="middle" class="sm">Medumba text</text>
+    <rect x="170" y="38" width="250" height="58" rx="8" class="front"/>
+    <text x="295" y="64" text-anchor="middle" class="ttl">① – ④ Medumba</text>
+    <text x="295" y="82" text-anchor="middle" class="sm">cleaner · word cutter · grammar · sense</text>
+    <rect x="170" y="106" width="250" height="30" rx="6" class="data"/>
+    <text x="295" y="126" text-anchor="middle" class="sm">Medumba lexicon (2,249 entries)</text>
+
+    <text x="20" y="182" class="lane-g">BAFUT FRONT (added later)</text>
+    <rect x="20" y="194" width="120" height="58" rx="8" class="box"/>
+    <text x="80" y="220" text-anchor="middle" class="ttl">story.bft</text>
+    <text x="80" y="238" text-anchor="middle" class="sm">Bafut text</text>
+    <rect x="170" y="194" width="250" height="58" rx="8" class="bafut"/>
+    <text x="295" y="220" text-anchor="middle" class="ttl">① – ④ Bafut</text>
+    <text x="295" y="238" text-anchor="middle" class="sm">same design, Bafut rules</text>
+    <rect x="170" y="262" width="250" height="30" rx="6" class="data"/>
+    <text x="295" y="282" text-anchor="middle" class="sm">Bafut lexicon (SIL dictionary: 6,152 entries)</text>
+
+    <path class="arrow" d="M140,67 H168" marker-end="url(#b)"/>
+    <path class="arrow" d="M140,223 H168" marker-end="url(#b)"/>
+    <path class="arrow" d="M420,67 H470 V130 H508" marker-end="url(#b)"/>
+    <path class="arrow" d="M420,223 H470 V160 H508" marker-end="url(#b)"/>
+
+    <text x="510" y="102" class="lane">SHARED · WRITTEN ONCE</text>
+    <rect x="510" y="114" width="150" height="62" rx="8" class="front"/>
+    <text x="585" y="140" text-anchor="middle" class="ttl">⑤ Meaning</text>
+    <text x="585" y="158" text-anchor="middle" class="sm">same for every language</text>
+    <path class="arrow" d="M660,145 H698" marker-end="url(#b)"/>
+
+    <rect x="700" y="60" width="140" height="56" rx="8" class="front"/>
+    <text x="770" y="84" text-anchor="middle" class="ttl">⑥ English writer</text>
+    <text x="770" y="102" text-anchor="middle" class="sm">→ English</text>
+    <rect x="700" y="128" width="140" height="56" rx="8" class="bafut"/>
+    <text x="770" y="152" text-anchor="middle" class="ttl">Bafut writer</text>
+    <text x="770" y="170" text-anchor="middle" class="sm">Medumba → Bafut</text>
+    <rect x="700" y="196" width="140" height="56" rx="8" class="front"/>
+    <text x="770" y="220" text-anchor="middle" class="ttl">Medumba writer</text>
+    <text x="770" y="238" text-anchor="middle" class="sm">Bafut → Medumba</text>
+    <path class="arrow" d="M680,145 V88 H698" marker-end="url(#b)"/>
+    <path class="arrow" d="M680,145 V224 H698" marker-end="url(#b)"/>
+
+    <rect x="870" y="60" width="110" height="192" rx="8" class="out"/>
+    <text x="925" y="130" text-anchor="middle" class="okt">Output</text>
+    <text x="925" y="150" text-anchor="middle" class="sm">any language</text>
+    <text x="925" y="166" text-anchor="middle" class="sm">to any other</text>
+    <path class="arrow" d="M840,88 H868" marker-end="url(#b)"/>
+    <path class="arrow" d="M840,156 H868" marker-end="url(#b)"/>
+    <path class="arrow" d="M840,224 H868" marker-end="url(#b)"/>
+  </svg>
+  </div>
+  <div class="why">
+    <div><b>Little extra code</b>Bafut reuses ⑤ and ⑥; only its front and dictionary are new.</div>
+    <div><b>Translates between them</b>Medumba ↔ Bafut through the shared meaning, not only into English.</div>
+    <div><b>Data needed</b>Permission for SIL's Bafut dictionary (6,152 entries), requested by email.</div>
+  </div>
+</section>
+
+<section>
+  <span class="eyebrow">Two people, two months</span>
+  <h2>Who builds what</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Fanyi (lead): compiler logic</th><th>Partner: language and quality</th></tr></thead>
+    <tbody>
+      <tr><td>① Cleaner, ② word cutter</td><td>Choose the Mode 1 keywords with a speaker</td></tr>
+      <tr><td>③ Parsers, ④ checker</td><td>Review the dictionary CSV, starting with common words</td></tr>
+      <tr><td>⑤ Meaning, ⑥ English writer, interpreter</td><td>Test files and 50–100 real sentences</td></tr>
+      <tr><td>Error reporter, <code>medu</code> command</td><td>Installer, report and slides</td></tr>
+    </tbody>
+  </table></div>
+  <p class="muted col"><b>Weeks 1–2</b> ①② · <b>3–4</b> Mode 1 · <b>5–6</b> Mode 2 (first 10 sentence patterns) · <b>7</b> tests + installer · <b>8</b> demo. Bafut if time is left.</p>
+</section>
+
+</div>
