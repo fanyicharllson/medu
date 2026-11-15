@@ -4,11 +4,11 @@ Build the Medumba lexicon for the Medu compiler.
 Downloads open-licensed Medumba data, cleans the spelling, merges everything
 into one dictionary and writes:
 
-    data/medumba_lexicon.json   - full entries (used by the compiler)
-    data/medumba_lexicon.csv    - same data, for opening in Excel / Sheets
-    data/stats.txt              - counts per source and word class
+    data/languages/medumba/lexicon.json  - full entries (used by the compiler)
+    data/languages/medumba/lexicon.csv   - same data, for Excel / Sheets
+    data/languages/medumba/stats.txt     - counts per source and word class
 
-Sources (all openly licensed, see data/SOURCES.md):
+Sources (all openly licensed, see data/languages/medumba/SOURCES.md):
   1. apertium-byv      Medumba morphological lexicon (GPL-3.0)
                        -> words, word class, noun classes, some French glosses
   2. apertium-byv-fra  Medumba <-> French bilingual dictionary (GPL-3.0)
@@ -40,8 +40,8 @@ from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA = ROOT / "data"
-RAW = DATA / "raw"
+RAW = ROOT / "data" / "raw"
+DATA = ROOT / "data" / "languages" / "medumba"
 
 APERTIUM_BYV = "https://raw.githubusercontent.com/apertium/apertium-byv/master"
 APERTIUM_BYV_FRA = "https://raw.githubusercontent.com/apertium/apertium-byv-fra/master"
@@ -356,10 +356,10 @@ def write_outputs(lex: Lexicon, per_source: dict[str, int], auto: int) -> None:
         "licence": "GPL-3.0 (derived from Apertium and FreeDict data)",
         "entries": entries,
     }
-    (DATA / "medumba_lexicon.json").write_text(
+    (DATA / "lexicon.json").write_text(
         json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
 
-    with (DATA / "medumba_lexicon.csv").open("w", encoding="utf-8-sig",
+    with (DATA / "lexicon.csv").open("w", encoding="utf-8-sig",
                                              newline="") as f:
         w = csv.writer(f)
         w.writerow(["medumba", "plain", "pos", "noun_class", "grammar_tags",
@@ -417,7 +417,7 @@ def main() -> int:
     auto = add_auto_english(lex, load_freedict(paths["freedict-fra-eng.tar.xz"]))
     print()
     write_outputs(lex, per_source, auto)
-    print(f"\nWrote {DATA / 'medumba_lexicon.json'}")
+    print(f"\nWrote {DATA / 'lexicon.json'}")
     return 0
 
 

@@ -67,9 +67,9 @@ python tools/build_lexicon.py            # builds data/ from open sources (Pytho
 python tools/build_lexicon.py --refresh  # downloads the sources again
 ```
 
-- `data/medumba_lexicon.json`: what the compiler loads
-- `data/medumba_lexicon.csv`: open in Excel or Google Sheets to review words
-- `data/SOURCES.md`: sources, licences and spelling rules
+- `data/languages/medumba/lexicon.json`: what the compiler loads
+- `data/languages/medumba/lexicon.csv`: open in Excel or Google Sheets to review words
+- `data/languages/medumba/SOURCES.md`: sources, licences and spelling rules
 
 Words come from the open [Apertium](https://github.com/apertium/apertium-byv) Medumba data (GPL-3.0), with English meanings suggested from French via FreeDict. Meanings marked as auto-suggested still need a Medumba speaker's review.
 
@@ -77,12 +77,15 @@ Words come from the open [Apertium](https://github.com/apertium/apertium-byv) Me
 
 ```text
 medu/
-  data/       dictionary (json, csv) + sources
-  docs/       architecture page
-  tools/      build_lexicon.py
-  medu/       compiler code (coming next)
-  tests/      test files (coming next)
+  medu/                    the compiler, one file per station (see each file's header)
+  data/languages/medumba/  dictionary + Mode 1 keywords
+  data/languages/bafut/    empty until the dual compiler
+  tests/                   unit tests + examples/ (test files)
+  tools/                   build_lexicon.py, run_examples.py
+  docs/                    architecture page, team plan (PDF)
 ```
+
+Team setup, file owners and branches: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Licence
 
