@@ -28,7 +28,8 @@ class MeduError(Exception):
         self.col = col
         self.hint = hint
 
-    def format(self, filename: str = "<input>", source: str = "") -> str:
+    def format(self, filename: str = "<input>", source: str = "",
+               color: bool = False) -> str:
         """Readable message with the line and a ^ under the problem:
 
         error[E101]: unknown word 'zii'
@@ -37,18 +38,26 @@ class MeduError(Exception):
         1 | mə zii.
           |    ^
           = help: did you mean 'zi' (sleep)?
+
+        color=True adds terminal colours (used by medu.ui.error).
         """
-        kind = "warning" if self.code.startswith("W") else "error"
-        out = [f"{kind}[{self.code}]: {self.message}"]
+        def paint(text: str, code: str) -> str:
+            return f"\033[{code}m{text}\033[0m" if color else text
+
+        warning = self.code.startswith("W")
+        kind_color = "1;38;5;172" if warning else "1;38;5;203"
+        kind = "warning" if warning else "error"
+        out = [paint(f"{kind}[{self.code}]", kind_color) + paint(f": {self.message}", "1")]
         if self.line:
-            out.append(f" --> {filename}:{self.line}:{self.col}")
+            out.append(paint(" --> ", "38;5;69") + f"{filename}:{self.line}:{self.col}")
             lines = source.splitlines()
             if 0 < self.line <= len(lines):
                 num = str(self.line)
                 pad = " " * len(num)
-                out += [f"{pad} |",
-                        f"{num} | {lines[self.line - 1]}",
-                        f"{pad} | {' ' * max(self.col - 1, 0)}^"]
+                bar = paint(" |", "38;5;69")
+                out += [f"{pad}{bar}",
+                        paint(num, "38;5;69") + f"{bar} {lines[self.line - 1]}",
+                        f"{pad}{bar} {' ' * max(self.col - 1, 0)}" + paint("^", kind_color)]
         if self.hint:
-            out.append(f"  = help: {self.hint}")
+            out.append(paint("  = help: ", "1;38;5;71") + self.hint)
         return "\n".join(out)

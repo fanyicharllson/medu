@@ -12,6 +12,8 @@ Compiler Construction course project · Project lead and architect: **Fanyi Char
 
 You write Medumba in a text file and run `medu`, the same way you run `python`.
 
+![Medu in the terminal](docs/terminal-preview.png)
+
 ```text
 # story.mdt
 mə nɛ̌n zi.
