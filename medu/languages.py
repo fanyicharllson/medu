@@ -18,10 +18,13 @@ Code never writes a Medumba word directly. It asks the Language object:
 from __future__ import annotations
 
 import json
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+# Inside a PyInstaller .exe, data files are unpacked to sys._MEIPASS.
+# The build must include them: --add-data "data/languages;data/languages"
+ROOT = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
 LANG_DIR = ROOT / "data" / "languages"
 
 # File extensions -> (language, mode). Bafut gets its own later.
