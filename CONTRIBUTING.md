@@ -36,6 +36,23 @@ git push -u origin adrien/mode1
 
 Nobody pushes to `main`. Open a pull request; Charllson reviews and merges it.
 
+## Terminal output (banner, colours)
+
+Everything the user sees goes through `medu/ui.py`, so Medu always looks the same.
+Preview it with `python -m medu.ui`.
+
+```python
+from medu import ui
+ui.setup()                           # first line of main(): UTF-8 + colours
+print(ui.banner("medumba"))          # interactive prompt and `medu --version`
+print(ui.header("medumba", "run"))   # one line at the top of `medu run` / `translate`
+print(ui.section("Output"))          # ── Output ──────
+print(ui.result("Emperor"))          # the answer, in green
+print(ui.error(err, path, clean(source, code=True)))   # any MeduError
+```
+
+Colours switch off by themselves when output goes to a file or `NO_COLOR` is set.
+
 ## Before opening a pull request
 
 ```bash
