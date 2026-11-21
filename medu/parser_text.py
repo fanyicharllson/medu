@@ -72,6 +72,7 @@ class Sentence:
     end: str = "."
     leftover: list[Token] = field(default_factory=list)   # W301 words
     line: int = 1
+    tokens: list[Token] = field(default_factory=list)     # all tokens of this sentence
 
 
 # ---------------------------------------------------------------------------
@@ -172,6 +173,12 @@ class _Parser:
 
     # -- grammar rules ------------------------------------------------------
     def sentence(self) -> Sentence:
+        first = self.i
+        s = self._sentence_body()
+        s.tokens = self.toks[first:self.i]     # kept to show the Medumba next to the English
+        return s
+
+    def _sentence_body(self) -> Sentence:
         start = self.peek()
         clauses, connectors = [self.clause()], []
         while self.is_connector():

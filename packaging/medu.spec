@@ -39,7 +39,7 @@ a = Analysis(
     [str(ROOT / entry)],
     pathex=[str(ROOT)],
     datas=[(str(ROOT / "data" / "languages"), "data/languages")],
-    hiddenimports=["medu.mode2", "medu.cli"],
+    hiddenimports=["medu.mode2", "medu.cli", "medu.mode1", "medu.updater"],
     excludes=["tkinter", "unittest", "pytest", "PIL"],
 )
 pyz = PYZ(a.pure)

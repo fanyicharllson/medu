@@ -41,3 +41,21 @@ Students then download **Medu-Setup-1.0.0.exe** from the repo's Releases page.
 - **Windows SmartScreen** warns about unsigned programs ("Windows protected your PC"). Tell users: **More info → Run anyway**. Removing the warning needs a paid code-signing certificate.
 - Files: `medu.spec` (PyInstaller recipe, author and version details), `installer.iss` (installer), `medu.ico` (icon).
 - To change the author name shown in Properties and the installer, edit `CompanyName` in `medu.spec` and `AppPublisher` in `installer.iss`.
+
+## Updates for users
+
+Users never need to come back to GitHub by hand:
+
+- `medu upgrade`: downloads the newest release's `Medu-Setup-<version>.exe` (or `medu.exe`) and installs it
+- `medu upgrade 1.2.0` / `medu downgrade 1.0.0`: install a specific version
+- Inside `medu>`, Medu checks GitHub quietly at most once a day and shows
+  *"Medu 1.1.0 is available. Run: medu upgrade"*. With no internet it says nothing.
+  Set `MEDU_NO_UPDATE_CHECK=1` to switch the check off.
+
+So every release must attach `Medu-Setup-<version>.exe` (preferred) or `medu.exe`, and its tag must be `v<version>`.
+
+## Version numbers
+
+- `1.0.0`: Mode 2 (sentences → English)
+- `1.x.0`: dictionary and grammar improvements
+- `2.0.0`: Mode 1 (programs) from Adrien

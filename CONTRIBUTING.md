@@ -8,8 +8,8 @@ Only edit your own files. If you need a change in someone else's file, open an i
 
 | Owner | Files |
 |---|---|
-| **Charllson** (lead architect) | `medu/tokens.py`, `errors.py`, `languages.py` (shared contracts), `cleaner.py`, `lexer.py`, `parser_text.py`, `checker_text.py`, `meaning.py`, `english.py`, `mode2.py`, `ui.py`, `data/`, `tools/`, `packaging/` (installer) |
-| **Adrien** (second lead developer) | `medu/parser_code.py`, `checker_code.py`, `interpreter.py`, `cli.py`, `tests/test_mode1.py` |
+| **Charllson** (lead architect) | `medu/tokens.py`, `errors.py`, `languages.py` (shared contracts), `cleaner.py`, `lexer.py`, `parser_text.py`, `checker_text.py`, `meaning.py`, `english.py`, `mode2.py`, `cli.py` (the medu command), `ui.py`, `updater.py`, `data/`, `tools/`, `packaging/` (installer) |
+| **Adrien** (second lead developer) | `medu/parser_code.py`, `checker_code.py`, `interpreter.py`, `mode1.py`, `tests/test_mode1.py` |
 | **Joy, Rydell** (testers) | `tests/examples/` |
 
 Each file starts with a comment saying what it takes, what it gives and what it must do.
@@ -22,7 +22,7 @@ Python 3.10 or newer. From the `medu` folder:
 python -m venv .venv
 .venv\Scripts\activate            # Windows  (macOS/Linux: source .venv/bin/activate)
 pip install -r requirements-dev.txt
-python -m pytest                  # should say: 5 passed
+python -m pytest                  # all tests should pass
 ```
 
 Activate the environment (`.venv\Scripts\activate`) every time you open a new terminal.
@@ -53,7 +53,19 @@ print(ui.version_text())             # medu -v / --version
 print(ui.help_text())                # medu -h / --help (help_text(True) inside medu>)
 ```
 
-`medu/mode2.py` `main()` already handles `-v`, `--help`, `-q`, `translate`, and the prompt commands `help`, `cls`, `version`, `exit`: copy that behaviour into `cli.py`.
+## Mode 1 hand-off (Adrien)
+
+`cli.py` is finished: `medu run file.med` and `medu check file.med` already call
+`medu/mode1.py`. Fill in its two functions and Mode 1 works everywhere, including
+the installed `medu.exe`:
+
+```python
+mode1.run(source, lang)   -> ProgramResult(english="print(lɛn)", output=["Emperor"])
+mode1.check(source, lang) -> None        # raise MeduError for the first mistake
+```
+
+Until then, `medu run` tells the user "Medu programs (.med) arrive in Medu 2.0".
+Try it with `python -m medu run samples/hello.med`. See every command: `python -m medu commands`.
 
 Colours switch off by themselves when output goes to a file or `NO_COLOR` is set.
 

@@ -117,12 +117,33 @@ def banner(language: str = "medumba", hint: bool = True) -> str:
            + paint(f"   {name} → English", DIM))
     credit = paint(f" {__company__} · {__authors__}", DIM)
     text = f"{logo}\n{tag}\n{credit}\n"
+    name = user_name()
+    if name and hint:
+        text += paint(f"\n  Welcome, {name}!", GREEN, BOLD) + "\n"
     if hint:
         text += paint("  Type a sentence. Commands: help, cls, version, exit", DIM) + "\n"
     return text
 
 
 REPO = "https://github.com/fanyicharllson/medu"
+
+
+def config_path():
+    """%APPDATA%\\Medu\\config.json, written by the installer's 'About you' page."""
+    from pathlib import Path
+    base = os.environ.get("MEDU_CONFIG_DIR") or os.path.join(
+        os.environ.get("APPDATA", os.path.expanduser("~")), "Medu")
+    return Path(base) / "config.json"
+
+
+def user_name() -> str:
+    """The name given in the installer, or '' (works offline, nothing is sent)."""
+    import json
+    try:
+        data = json.loads(config_path().read_text(encoding="utf-8-sig"))
+        return str(data.get("name", "")).strip()[:40]
+    except (OSError, ValueError, AttributeError):
+        return ""
 
 
 def version_text() -> str:
@@ -146,9 +167,13 @@ def help_text(prompt_mode: bool = False) -> str:
     lines += [h("From a terminal")]
     for cmd, what in [("medu", "interactive prompt (medu>)"),
                       ("medu translate file.mdt", "translate Medumba sentences"),
-                      ("medu run file.med", "run a Medu program"),
+                      ("medu run file.med", "run a Medu program (Medu 2.0)"),
+                      ("medu check file", "only look for mistakes"),
+                      ("medu upgrade", "install the newest version from GitHub"),
+                      ("medu downgrade 1.0.0", "go back to an older version"),
                       ("medu -v, --version", "version"),
                       ("medu -h, --help", "this help"),
+                      ("medu commands", "every command and what it does"),
                       ("-q", "hide the banner, e.g. medu -q translate file.mdt")]:
         lines.append(f"  {c(cmd.ljust(25))} {what}")
     lines += ["",
@@ -190,6 +215,11 @@ def section(title: str) -> str:
 def result(text: str) -> str:
     """The answer the user is waiting for: program output or English."""
     return paint(text, GREEN, BOLD)
+
+
+def label(name: str) -> str:
+    """Fixed-width tag in front of a line: 'Medumba ', 'English '."""
+    return paint(f"{name:<8}", OCHRE, BOLD)
 
 
 def note(text: str) -> str:
