@@ -7,6 +7,8 @@ This is what makes Medu a dual compiler. Each language has a folder:
 
     data/languages/medumba/lexicon.json    dictionary
     data/languages/medumba/keywords.json   Mode 1 keywords, e.g. {"PRINT": "dʉ"}
+    data/languages/medumba/grammar.json    Mode 2 rules: pronouns, markers, tense
+    data/languages/medumba/corrections.json  checked meanings (replace automatic ones)
     data/languages/bafut/...               same files, added later
 
 Code never writes a Medumba word directly. It asks the Language object:
@@ -39,6 +41,7 @@ class Language:
     name: str
     entries: list[dict] = field(default_factory=list)   # lexicon entries
     keywords: dict[str, str] = field(default_factory=dict)  # concept -> word
+    grammar: dict = field(default_factory=dict)              # Mode 2 rules
 
     def keyword_for(self, concept: str) -> str:
         return self.keywords[concept]
@@ -67,4 +70,23 @@ def load(name: str) -> Language:
         keywords = {k: v for k, v in
                     json.loads(kw_file.read_text(encoding="utf-8")).items()
                     if not k.startswith("_")}
-    return Language(name=name, entries=entries, keywords=keywords)
+    grammar = _read_json(folder / "grammar.json")
+    _apply_corrections(entries, _read_json(folder / "corrections.json"))
+    return Language(name=name, entries=entries, keywords=keywords, grammar=grammar)
+
+
+def _apply_corrections(entries: list[dict], corrections: dict) -> None:
+    """Checked meanings (corrections.json) replace automatic ones."""
+    for e in entries:
+        fix = corrections.get(e["medumba"])
+        if fix and fix.get("pos", e["pos"]) == e["pos"]:
+            e["gloss_en"] = [fix["en"]]
+            e["gloss_en_auto"] = []
+            e.setdefault("sources", []).append("corrections.json")
+
+
+def _read_json(path: Path) -> dict:
+    if not path.exists():
+        return {}
+    return {k: v for k, v in json.loads(path.read_text(encoding="utf-8")).items()
+            if not k.startswith("_")}

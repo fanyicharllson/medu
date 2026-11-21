@@ -99,11 +99,18 @@ def _index(lang: Language) -> _Index:
 
 
 def _lookup(idx: _Index, phrase: str) -> list[dict]:
-    """Strictest match first: exact, then without tones, then keyboard."""
-    return (idx.exact.get(phrase.lower())
-            or idx.plain.get(plain(phrase))
-            or idx.keyboard.get(keyboard(phrase))
-            or [])
+    """Strictest match first: exact, then without tones, then keyboard.
+
+    Expressions of several words never match through keyboard letters:
+    'mə jʉ' (I eat) must not become the expression 'mə ju'."""
+    found = idx.exact.get(phrase.lower())
+    if found:
+        return found
+    if " " in phrase:
+        return idx.plain.get(plain(phrase)) or []
+    # one word, not spelled exactly: every word with the same keyboard letters
+    # (this includes the tone-free matches); the parser picks the best meaning
+    return idx.keyboard.get(keyboard(phrase)) or []
 
 
 def _suggest(idx: _Index, word: str) -> str | None:

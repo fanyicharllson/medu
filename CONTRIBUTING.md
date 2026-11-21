@@ -8,7 +8,7 @@ Only edit your own files. If you need a change in someone else's file, open an i
 
 | Owner | Files |
 |---|---|
-| **Charllson** (lead architect) | `medu/tokens.py`, `errors.py`, `languages.py` (shared contracts), `cleaner.py`, `lexer.py`, `parser_text.py`, `checker_text.py`, `meaning.py`, `english.py`, `data/`, `tools/build_lexicon.py` |
+| **Charllson** (lead architect) | `medu/tokens.py`, `errors.py`, `languages.py` (shared contracts), `cleaner.py`, `lexer.py`, `parser_text.py`, `checker_text.py`, `meaning.py`, `english.py`, `mode2.py`, `ui.py`, `data/`, `tools/`, `packaging/` (installer) |
 | **Adrien** (second lead developer) | `medu/parser_code.py`, `checker_code.py`, `interpreter.py`, `cli.py`, `tests/test_mode1.py` |
 | **Joy, Rydell** (testers) | `tests/examples/` |
 

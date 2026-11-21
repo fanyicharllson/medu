@@ -22,7 +22,7 @@ from __future__ import annotations
 import os
 import sys
 
-from medu import __version__
+from medu import __authors__, __company__, __version__
 from medu.errors import MeduError
 
 # 256-colour palette, inspired by Ndop cloth: indigo and ochre
@@ -64,9 +64,9 @@ def _enable_windows_ansi() -> None:
 def setup(color: bool | None = None) -> None:
     """Call once at start-up. color=None decides automatically."""
     global _color
-    for stream in (sys.stdout, sys.stderr):
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
         try:
-            stream.reconfigure(encoding="utf-8")
+            stream.reconfigure(encoding="utf-8-sig" if stream is sys.stdin else "utf-8")
         except (AttributeError, ValueError):
             pass
     if color is None:
@@ -102,8 +102,9 @@ def banner(language: str = "medumba") -> str:
     tag = (paint(" :: Medu :: ", OCHRE, BOLD)
            + paint(f"  v{__version__}", BOLD)
            + paint(f"   {name} → English", DIM))
+    credit = paint(f" {__company__} · {__authors__}", DIM)
     hint = paint("  Type a sentence, or 'exit' to quit.", DIM)
-    return f"{logo}\n{tag}\n{hint}\n"
+    return f"{logo}\n{tag}\n{credit}\n{hint}\n"
 
 
 def header(language: str, command: str) -> str:
@@ -126,6 +127,16 @@ def result(text: str) -> str:
 def note(text: str) -> str:
     """Extra information, e.g. "(read as: mə nɛ̌n zi)"."""
     return paint(f"  {text}", DIM)
+
+
+def ms(seconds: float) -> str:
+    """0.0042 -> '4.2 ms', 1.5 -> '1.50 s'."""
+    return f"{seconds * 1000:.1f} ms" if seconds < 1 else f"{seconds:.2f} s"
+
+
+def timing(text: str) -> str:
+    """Spring Boot-style timing line:  ✓ Translated 13 sentences in 4.2 ms"""
+    return paint("✓ ", GREEN) + paint(text, DIM)
 
 
 def prompt() -> str:

@@ -1,0 +1,19 @@
+{
+  "_note": "Checked English meanings. They replace automatic ones and remove the * in translations. Each one is confirmed by a Medumba fieldwork sentence (apertium-byv dev/AnnaBelewSentences.tsv) or by a speaker. Add speaker corrections here.",
+  "_format": "word: {pos, en, source}",
+
+  "jʉ":       {"pos": "v", "en": "eat",   "source": "fieldwork: 'I eat the fat bird' (ʒɯ)"},
+  "yən":      {"pos": "v", "en": "see",   "source": "fieldwork: 'I saw the dog' (jən)"},
+  "nu":       {"pos": "v", "en": "drink", "source": "fieldwork: 'I drink cold water'"},
+  "zi":       {"pos": "v", "en": "sleep", "source": "fieldwork: 'I am sleeping'"},
+  "zwi":      {"pos": "v", "en": "kill",  "source": "fieldwork: 'I kill the long snake'"},
+  "swɛn":     {"pos": "v", "en": "sell",  "source": "fieldwork: 'The woman sells bananas'"},
+  "fɑ":       {"pos": "v", "en": "give",  "source": "fieldwork: 'I gave the woman a dog' (fɔ)"},
+  "nɛ̀nə":     {"pos": "v", "en": "go",    "source": "fieldwork: 'Ariane went' (nɛn)"},
+  "nɛnə":     {"pos": "v", "en": "go",    "source": "fieldwork: 'Ariane went' (nɛn)"},
+  "mɛn":      {"pos": "n", "en": "child", "source": "fieldwork: 'child of child' (mɛn T mɛn)"},
+  "mbʉ":      {"pos": "n", "en": "dog",   "source": "fieldwork: 'I saw the dog' (mʙɯ)"},
+  "ntsə":     {"pos": "n", "en": "water", "source": "fieldwork: 'I drink cold water'"},
+  "mɛ̀nnzwi":  {"pos": "n", "en": "woman", "source": "fieldwork: 'The woman sells bananas' (mɛnzwi)"},
+  "bùsi":     {"pos": "n", "en": "cat",   "source": "fieldwork: 'Did I see the cat?' (busi)"}
+}

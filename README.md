@@ -4,9 +4,11 @@
 Medu reads Medumba, checks it for syntax errors, and translates it into English.
 It will later become a **dual compiler** that also understands Bafut.
 
-Compiler Construction course project · Project lead and architect: **Fanyi Charllson**
+Compiler Construction course project · **CharlseEmpire Tech**
+Authors: **Charllson** (lead architect) and **Adrien Tello** (second lead developer)
 
-> Status: dictionary built (2,249 Medumba entries), architecture designed, compiler not written yet.
+> Status: Mode 2 (sentences → English) works; Mode 1 (programs) in progress. Try it: `python -m medu.mode2`
+> (examples in [samples/](samples/)). Build the Windows installer: [packaging/](packaging/README.md).
 
 ## How it will work
 

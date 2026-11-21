@@ -1,0 +1,35 @@
+{
+  "_source": "Rules from Medumba fieldwork sentences (apertium-byv dev/AnnaBelewSentences.tsv, GPL-3.0) and the grammar tags in the lexicon. To be confirmed by a speaker.",
+  "_word_order": "Subject  [markers: not / past / future / -ing / always]  Verb  [Object] [Object]  [Adverb]  [ki = question]",
+
+  "default_tense": "past",
+  "_default_tense": "A verb with no tense marker is read as recent past: fieldwork 'mə zi' = I slept, 'mə yən mbʉ' = I saw the dog.",
+
+  "pronouns": {
+    "mə":  {"en": "I",       "obj": "me",      "person": 1, "number": "sg"},
+    "mə̀":  {"en": "I",       "obj": "me",      "person": 1, "number": "sg"},
+    "wʉ":  {"en": "you",     "obj": "you",     "person": 2, "number": "sg"},
+    "wʉ̀":  {"en": "you",     "obj": "you",     "person": 2, "number": "sg"},
+    "u":   {"en": "you",     "obj": "you",     "person": 2, "number": "sg"},
+    "a":   {"en": "he/she",  "obj": "him/her", "person": 3, "number": "sg"},
+    "yi":  {"en": "he/she",  "obj": "him/her", "person": 3, "number": "sg"},
+    "bag": {"en": "we",      "obj": "us",      "person": 1, "number": "pl"},
+    "bɑ̀g": {"en": "we",      "obj": "us",      "person": 1, "number": "pl"},
+    "bin": {"en": "you",     "obj": "you",     "person": 2, "number": "pl"},
+    "bìn": {"en": "you",     "obj": "you",     "person": 2, "number": "pl"},
+    "bi":  {"en": "you",     "obj": "you",     "person": 2, "number": "pl"},
+    "bo":  {"en": "they",    "obj": "them",    "person": 3, "number": "pl"}
+  },
+
+  "aux_verbs": {"nɛ̌n": "prog", "nɛn": "prog"},
+  "_aux_verbs": "Fieldwork 'mə nɛn zi' = I am sleeping: nɛn (go) before another verb marks -ing.",
+
+  "marker_tags": {
+    "neg": "negative",
+    "past": "past",
+    "fut": "future",
+    "prog": "progressive",
+    "hab": "habitual"
+  },
+  "question_tag": "qst"
+}
