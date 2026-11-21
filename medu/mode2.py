@@ -22,7 +22,7 @@ import sys
 import time
 from pathlib import Path
 
-from medu import checker_text, english, languages, meaning, parser_text, ui
+from medu import checker_text, english, languages, meaning, parser_text, ui, updater
 from medu.cleaner import clean
 from medu.errors import MeduError
 from medu.languages import Language
@@ -38,8 +38,19 @@ def translate(text: str, lang: Language) -> english.Result:
     meanings = meaning.build(sentences, lang)              # ⑤
     result = english.write(meanings)                       # ⑥
     chosen = _chosen_spellings(sentences)
-    standard = [chosen.get(id(t)) or min(t.value, key=parser_text._rank)["medumba"]
-                for t in tokens if t.kind == WORD and t.value]
+
+    def spell(t):
+        if t.kind != WORD or not t.value:
+            return t.text
+        return chosen.get(id(t)) or min(t.value, key=parser_text._rank)["medumba"]
+
+    result.sources, result.typed = [], []
+    for s in sentences:
+        words = [t for t in s.tokens if t.kind == WORD]
+        punct = "".join(t.text for t in s.tokens if t.kind != WORD and t.text in ".?!")
+        result.sources.append(" ".join(spell(t) for t in words) + punct)
+        result.typed.append(" ".join(t.text for t in words) + punct)
+    standard = [spell(t) for t in tokens if t.kind == WORD and t.value]
     typed = [t.text for t in tokens if t.kind == WORD]
     result.read_as = " ".join(standard) if standard != typed else ""
     return result
@@ -70,10 +81,22 @@ def _chosen_spellings(sentences) -> dict[int, str]:
 
 
 def show(result: english.Result) -> None:
-    for line in result.lines:
-        print(ui.result(line))
-    if result.read_as:
-        print(ui.note(f"(read as: {result.read_as})"))
+    """Each sentence as a pair:
+
+        Medumba   mə nɛ̌n zi        (you typed: me nen zi)
+        English   I am sleeping.
+    """
+    many = len(result.lines) > 1
+    for i, english_line in enumerate(result.lines):
+        source = result.sources[i] if i < len(result.sources) else ""
+        typed = result.typed[i] if i < len(result.typed) else source
+        num = ui.paint(f"{i + 1:>2}  ", ui.DIM) if many else ""
+        pad = "    " if many else ""
+        extra = ui.note(f"(you typed: {typed})") if typed != source else ""
+        print(f"{num}{ui.label('Medumba')} {source}{extra}")
+        print(f"{pad}{ui.label('English')} {ui.result(english_line)}")
+        if many:
+            print()
     for w in result.warnings:
         print(ui.paint(w, ui.OCHRE))
     for n in result.notes:
@@ -113,7 +136,10 @@ def interactive(lang: Language, load_ms: float = 0.0, quiet: bool = False) -> in
     if not quiet:
         print(ui.banner(lang.name))
     print(ui.timing(f"Started in {ui.ms(load_ms)} · {len(lang.entries):,} words loaded") + "\n")
+    notice = updater.UpdateNotice()          # quiet, background, offline-safe
     while True:
+        if (msg := notice.message()):
+            print(msg + "\n")
         try:
             line = input(ui.prompt())
         except (EOFError, KeyboardInterrupt):
@@ -160,6 +186,16 @@ def main(argv: list[str] | None = None) -> int:
         print(ui.banner("medumba", hint=False))
         print(ui.help_text())
         return 0
+    if first == "upgrade":
+        return updater.install(argv[1] if len(argv) > 1 else None)
+    if first == "downgrade":
+        if len(argv) < 2:
+            print(ui.paint("usage: medu downgrade <version>   e.g. medu downgrade 1.0.0", ui.OCHRE))
+            versions = updater.list_versions()
+            if versions:
+                print(ui.note("Available versions: " + ", ".join(versions)))
+            return 1
+        return updater.install(argv[1], allow_older=True)
     if first == "run":
         print(ui.paint("medu run (Mode 1 programs) is coming soon.", ui.OCHRE))
         return 1

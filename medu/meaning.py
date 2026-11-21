@@ -68,7 +68,7 @@ def word_of(entry: dict, medumba: str = "") -> Word:
                 text = text[0].lower() + text[1:]
             return Word(text, sure, medumba)
     if entry.get("gloss_fr"):
-        return Word(f"[{entry['gloss_fr'][0]}]", False, medumba)
+        return Word(f"[French: {entry['gloss_fr'][0]}]", False, medumba)
     return Word(f"[{medumba}]", False, medumba)
 
 

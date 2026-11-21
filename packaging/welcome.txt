@@ -1,0 +1,23 @@
+Welcome to Medu
+
+Medu is a compiler for Medumba (Mə̀dʉ̂mbɑ̀), the language of Bangangté, Cameroon.
+
+What Medu does
+  - Translates Medumba sentences into English
+  - Finds mistakes in sentences and explains how to fix them (with line and column)
+  - Understands words typed without special letters (me nen zi = mə nɛ̌n zi)
+
+Works offline
+  Medu runs entirely on your computer. It needs no internet connection and sends no information anywhere.
+
+What this installer will ask you
+  1. To accept the licence (GPL-3.0, free and open source)
+  2. Your name, so Medu can greet you (optional, stays on this computer)
+  3. Where to install Medu
+  4. A few options: add Medu to your terminal, open .mdt files with Medu, a desktop shortcut
+
+Made by CharlseEmpire Tech
+Charllson & Adrien Tello
+https://github.com/fanyicharllson/medu
+
+Dictionary data: Apertium (GPL-3.0) and FreeDict. Grammar based on Medumba fieldwork recordings.

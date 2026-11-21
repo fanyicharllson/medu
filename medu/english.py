@@ -51,6 +51,8 @@ class Result:
     notes: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     read_as: str = ""
+    sources: list = field(default_factory=list)   # Medumba of each sentence (standard spelling)
+    typed: list = field(default_factory=list)     # what the user typed
 
     @property
     def text(self) -> str:
@@ -216,7 +218,7 @@ def write(meanings: list[SentenceMeaning]) -> Result:
                 "it is translated word by word after '…'")
     pairs = []
     for word in writer.unsure:
-        pair = f"{word.source} = {word.en.strip('[]')}"
+        pair = f"{word.source} = {word.en.strip('[]').replace('French: ', '')}" + (" (French)" if word.en.startswith("[French") else "")
         if pair not in pairs:
             pairs.append(pair)
     if pairs:

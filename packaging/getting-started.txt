@@ -1,0 +1,29 @@
+Medu is installed!
+
+Start Medu
+  Open a terminal (cmd, PowerShell or Windows Terminal) and type:
+
+      medu
+
+  Then type a Medumba sentence at the medu> prompt, for example:
+
+      mə kə̀ jʉ          ->  I did not eat.
+      a yən mbʉ ki      ->  Did he/she see the dog?
+
+Translate a file
+      medu translate story.mdt
+
+  Or double-click any .mdt file.
+
+Useful commands
+      medu --help        all commands, words to start with, keyboard shortcuts
+      medu --version     the version you have
+  Inside medu>:  help, cls (clear the screen), version, exit
+
+Examples
+  Look in the "samples" folder next to Medu (Start menu > Medu samples).
+
+If Windows says "Windows protected your PC" when running Medu,
+click "More info", then "Run anyway". Medu is not signed with a paid certificate.
+
+Problems or ideas? https://github.com/fanyicharllson/medu/issues
