@@ -80,9 +80,17 @@ def show(result: english.Result) -> None:
         print(ui.note(n))
 
 
-def translate_file(path: str, lang: Language, load_ms: float = 0.0) -> int:
-    source = Path(path).read_text(encoding="utf-8")
-    print(ui.header(lang.name, "translate") + "\n")
+def translate_file(path: str, lang: Language, load_ms: float = 0.0,
+                   quiet: bool = False) -> int:
+    try:
+        source = Path(path).read_text(encoding="utf-8")
+    except OSError:
+        print(ui.paint(f"error: cannot open '{path}'", ui.RED, ui.BOLD))
+        print(ui.note("check the file name and folder, e.g. samples/sentences.mdt"))
+        return 1
+    if not quiet:
+        print(ui.banner(lang.name, hint=False))
+    print(ui.header(lang.name, f"translate {Path(path).name}") + "\n")
     start = time.perf_counter()
     try:
         result = translate(source, lang)
@@ -98,8 +106,12 @@ def translate_file(path: str, lang: Language, load_ms: float = 0.0) -> int:
     return 0
 
 
-def interactive(lang: Language, load_ms: float = 0.0) -> int:
-    print(ui.banner(lang.name))
+PROMPT_COMMANDS = {"exit", "quit", "help", "cls", "clear", "version"}
+
+
+def interactive(lang: Language, load_ms: float = 0.0, quiet: bool = False) -> int:
+    if not quiet:
+        print(ui.banner(lang.name))
     print(ui.timing(f"Started in {ui.ms(load_ms)} · {len(lang.entries):,} words loaded") + "\n")
     while True:
         try:
@@ -107,9 +119,21 @@ def interactive(lang: Language, load_ms: float = 0.0) -> int:
         except (EOFError, KeyboardInterrupt):
             print()
             return 0
-        if line.strip().lower() in ("exit", "quit"):
+        command = line.strip().lower()
+        if command in ("exit", "quit"):
+            print(ui.note("Bye!"))
             return 0
-        if not line.strip():
+        if command == "help":
+            print(ui.help_text(prompt_mode=True) + "\n")
+            continue
+        if command in ("cls", "clear"):
+            ui.clear_screen()
+            print(ui.banner(lang.name))
+            continue
+        if command == "version":
+            print(ui.version_text() + "\n")
+            continue
+        if not command:
             continue
         start = time.perf_counter()
         try:
@@ -121,14 +145,35 @@ def interactive(lang: Language, load_ms: float = 0.0) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    argv = sys.argv[1:] if argv is None else argv
+    """medu [-q] [file.mdt | translate file.mdt | -v | --version | -h | --help | help]
+
+    Until cli.py is finished, this is also what a test medu.exe runs."""
+    argv = list(sys.argv[1:] if argv is None else argv)
     ui.setup()
+    quiet = any(a in ("-q", "--quiet") for a in argv)
+    argv = [a for a in argv if a not in ("-q", "--quiet")]
+    first = argv[0].lower() if argv else ""
+    if first in ("-v", "--version", "version"):
+        print(ui.version_text())
+        return 0
+    if first in ("-h", "--help", "help", "/?"):
+        print(ui.banner("medumba", hint=False))
+        print(ui.help_text())
+        return 0
+    if first == "run":
+        print(ui.paint("medu run (Mode 1 programs) is coming soon.", ui.OCHRE))
+        return 1
+    if first == "translate":
+        argv = argv[1:]
+        if not argv:
+            print(ui.paint("usage: medu translate file.mdt", ui.OCHRE))
+            return 1
     start = time.perf_counter()
     lang = languages.load("medumba")
     load = time.perf_counter() - start
     if argv:
-        return translate_file(argv[0], lang, load)
-    return interactive(lang, load)
+        return translate_file(argv[0], lang, load, quiet)
+    return interactive(lang, load, quiet)
 
 
 if __name__ == "__main__":

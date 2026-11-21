@@ -49,7 +49,11 @@ print(ui.header("medumba", "run"))   # one line at the top of `medu run` / `tran
 print(ui.section("Output"))          # ── Output ──────
 print(ui.result("Emperor"))          # the answer, in green
 print(ui.error(err, path, clean(source, code=True)))   # any MeduError
+print(ui.version_text())             # medu -v / --version
+print(ui.help_text())                # medu -h / --help (help_text(True) inside medu>)
 ```
+
+`medu/mode2.py` `main()` already handles `-v`, `--help`, `-q`, `translate`, and the prompt commands `help`, `cls`, `version`, `exit`: copy that behaviour into `cli.py`.
 
 Colours switch off by themselves when output goes to a file or `NO_COLOR` is set.
 

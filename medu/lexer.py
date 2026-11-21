@@ -40,6 +40,8 @@ from medu.tokens import (EOF, KEYWORD, LPAREN, NAME, NEWLINE, NUMBER, OP, PUNCT,
 
 GLOTTAL = "ʼ"  # ʼ counts as a letter
 OPERATORS = set("=+-*/")
+NO_SUGGESTION = ("check the spelling, or type 'help' to see words you can use "
+                 "(full list: samples/README.md)")
 SENTENCE_PUNCT = set(".?!,;:")
 
 
@@ -196,7 +198,7 @@ def tokenize_text(text: str, lang: Language) -> list[Token]:
                 i += 1
             else:
                 raise MeduError("E101", f"unknown word '{piece}'", line_no, col,
-                                hint=_suggest(idx, piece))
+                                hint=_suggest(idx, piece) or NO_SUGGESTION)
     tokens.append(Token(EOF, "", None, len(text.split("\n")), 1))
     return tokens
 
