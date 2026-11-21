@@ -35,3 +35,23 @@ def test_coloured_error_keeps_same_text():
 def test_header_one_line():
     ui.setup(color=False)
     assert ui.header("medumba", "run") == f"Medu v{__version__} · run · Mə̀dʉ̂mbɑ̀"
+
+
+def test_version_and_help_text():
+    ui.setup(color=False)
+    assert __version__ in ui.version_text()
+    assert "CharlseEmpire Tech" in ui.version_text()
+    text = ui.help_text(prompt_mode=True)
+    for word in ("cls", "medu --version".split()[0], "issues", "mə kə̀ jʉ"):
+        assert word in text
+
+
+def test_command_line_flags(capsys):
+    from medu import mode2
+    assert mode2.main(["-v"]) == 0
+    assert __version__ in capsys.readouterr().out
+    assert mode2.main(["--help"]) == 0
+    assert "Help and contact" in capsys.readouterr().out
+    assert mode2.main(["-q", "translate", "samples/sentences.mdt"]) == 0
+    assert "I am sleeping." in capsys.readouterr().out
+    assert mode2.main(["no_such_file.mdt"]) == 1

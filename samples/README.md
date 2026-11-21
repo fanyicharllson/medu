@@ -7,7 +7,12 @@ python -m medu.mode2 samples/sentences.mdt        # many sentences at once
 python -m medu.mode2 samples/plain_letters.mdt    # typed without special letters
 python -m medu.mode2 samples/errors/no_verb.mdt   # each file in errors/ shows one error
 python -m medu.mode2                              # interactive prompt: type a sentence
+python -m medu.mode2 --help                       # all commands, words and contact
+python -m medu.mode2 -v                           # version
 ```
+
+Inside the prompt you can type `help`, `cls` (clear the screen), `version` and `exit`.
+If `python` is not found on Windows, use `py` instead (`py -m medu.mode2`).
 
 When `cli.py` is ready, the same works with `medu translate file.mdt` and `medu`.
 

@@ -61,6 +61,18 @@ def _enable_windows_ansi() -> None:
         pass
 
 
+def _git_bash_terminal() -> bool:
+    """Git Bash (mintty) talks to Python through a pipe, so isatty() says no
+    even though the window shows colours. Not when writing to a file."""
+    if not os.environ.get("TERM", "").startswith("xterm"):
+        return False
+    try:
+        import stat
+        return not stat.S_ISREG(os.fstat(sys.stdout.fileno()).st_mode)
+    except (OSError, ValueError, AttributeError):
+        return False
+
+
 def setup(color: bool | None = None) -> None:
     """Call once at start-up. color=None decides automatically."""
     global _color
@@ -75,7 +87,7 @@ def setup(color: bool | None = None) -> None:
         elif os.environ.get("FORCE_COLOR"):
             color = True
         else:
-            color = sys.stdout.isatty()
+            color = sys.stdout.isatty() or _git_bash_terminal()
     if color:
         _enable_windows_ansi()
     _color = color
@@ -95,16 +107,72 @@ def paint(text: str, *codes: str) -> str:
 # Building blocks
 # ---------------------------------------------------------------------------
 
-def banner(language: str = "medumba") -> str:
-    """Big start-up banner, shown by the interactive prompt and --version."""
+def banner(language: str = "medumba", hint: bool = True) -> str:
+    """Big Medu banner, shown at the start of every run (hide it with -q).
+    hint=True adds the line for the interactive prompt."""
     name = LANGUAGE_NAMES.get(language, language.title())
     logo = "\n".join(paint(line, INDIGO, BOLD) for line in LOGO.strip("\n").split("\n"))
     tag = (paint(" :: Medu :: ", OCHRE, BOLD)
            + paint(f"  v{__version__}", BOLD)
            + paint(f"   {name} → English", DIM))
     credit = paint(f" {__company__} · {__authors__}", DIM)
-    hint = paint("  Type a sentence, or 'exit' to quit.", DIM)
-    return f"{logo}\n{tag}\n{credit}\n{hint}\n"
+    text = f"{logo}\n{tag}\n{credit}\n"
+    if hint:
+        text += paint("  Type a sentence. Commands: help, cls, version, exit", DIM) + "\n"
+    return text
+
+
+REPO = "https://github.com/fanyicharllson/medu"
+
+
+def version_text() -> str:
+    """medu -v / medu --version"""
+    return (paint("Medu", INDIGO, BOLD) + f" {__version__}\n"
+            + paint(f"{__company__} · {__authors__}\n{REPO}", DIM))
+
+
+def help_text(prompt_mode: bool = False) -> str:
+    """medu --help, and 'help' inside the medu> prompt."""
+    h = lambda s: paint(s, OCHRE, BOLD)      # noqa: E731  section titles
+    c = lambda s: paint(s, INDIGO, BOLD)     # noqa: E731  commands
+    lines = []
+    if prompt_mode:
+        lines += [h("Inside medu>"),
+                  f"  {c('<a sentence>')}   translate it, e.g.  mə kə̀ jʉ",
+                  f"  {c('help')}           this help",
+                  f"  {c('cls')} / {c('clear')}    clear the screen",
+                  f"  {c('version')}        Medu version",
+                  f"  {c('exit')}           leave Medu", ""]
+    lines += [h("From a terminal")]
+    for cmd, what in [("medu", "interactive prompt (medu>)"),
+                      ("medu translate file.mdt", "translate Medumba sentences"),
+                      ("medu run file.med", "run a Medu program"),
+                      ("medu -v, --version", "version"),
+                      ("medu -h, --help", "this help"),
+                      ("-q", "hide the banner, e.g. medu -q translate file.mdt")]:
+        lines.append(f"  {c(cmd.ljust(25))} {what}")
+    lines += ["",
+              h("Sentence pattern"),
+              "  who + [kə̀ not | fə̀ past | àʼ will | nɛ̌n -ing | nùm always] + verb + [thing] + [ki ?]",
+              "  mə zi = I slept · mə kə̀ jʉ = I did not eat · a yən mbʉ ki = Did he/she see the dog?", "",
+              h("Words to start with"),
+              "  mə I · a he/she · bo they · zi sleep · jʉ eat · nu drink · yən see · fɑ give",
+              "  mbʉ dog · bùsi cat · ntsə water · mɛn child · mɛ̀nnzwi woman", "",
+              h("No special letters on your keyboard?"),
+              "  Type plain letters (me nen zi), or shortcuts: e* ə · e+ ɛ · u* ʉ · a* ɑ · o+ ɔ · n* ŋ", "",
+              h("Help and contact"),
+              f"  Guide and examples: {REPO}",
+              f"  Report a problem:   {REPO}/issues",
+              f"  {__company__} · {__authors__}"]
+    return "\n".join(lines)
+
+
+def clear_screen() -> None:
+    """cls / clear inside the prompt."""
+    if os.name == "nt" and not os.environ.get("TERM", "").startswith("xterm"):
+        os.system("cls")
+    else:
+        print("\033[2J\033[3J\033[H", end="", flush=True)
 
 
 def header(language: str, command: str) -> str:
