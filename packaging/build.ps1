@@ -6,6 +6,7 @@
 # Output:  dist\medu.exe   and   dist\Medu-Setup-<version>.exe (if Inno Setup is installed)
 
 param([switch]$Mode2)
+$clock = [System.Diagnostics.Stopwatch]::StartNew()
 $ErrorActionPreference = "Continue"   # native tools write notices to stderr; we check exit codes
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
@@ -35,3 +36,6 @@ if ($iscc) {
     Write-Host "Done: dist\medu.exe" -ForegroundColor Green
     Write-Host "Install Inno Setup 6 (free, jrsoftware.org) to also build Medu-Setup-$version.exe" -ForegroundColor Yellow
 }
+
+$clock.Stop()
+Write-Host ("Build finished in {0:N1} s (tests, exe and installer)" -f $clock.Elapsed.TotalSeconds) -ForegroundColor Cyan

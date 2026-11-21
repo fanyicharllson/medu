@@ -19,6 +19,7 @@ Test it now, before cli.py exists:
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 from medu import checker_text, english, languages, meaning, parser_text, ui
@@ -79,19 +80,27 @@ def show(result: english.Result) -> None:
         print(ui.note(n))
 
 
-def translate_file(path: str, lang: Language) -> int:
+def translate_file(path: str, lang: Language, load_ms: float = 0.0) -> int:
     source = Path(path).read_text(encoding="utf-8")
     print(ui.header(lang.name, "translate") + "\n")
+    start = time.perf_counter()
     try:
-        show(translate(source, lang))
-        return 0
+        result = translate(source, lang)
     except MeduError as err:
         print(ui.error(err, path, clean(source)))
+        print("\n" + ui.timing(f"Stopped after {ui.ms(time.perf_counter() - start)}"))
         return 1
+    show(result)
+    n = len(result.lines)
+    print("\n" + ui.timing(f"Translated {n} sentence{'s' * (n != 1)} in "
+                           f"{ui.ms(time.perf_counter() - start)}"
+                           f" (dictionary loaded in {ui.ms(load_ms)})"))
+    return 0
 
 
-def interactive(lang: Language) -> int:
+def interactive(lang: Language, load_ms: float = 0.0) -> int:
     print(ui.banner(lang.name))
+    print(ui.timing(f"Started in {ui.ms(load_ms)} · {len(lang.entries):,} words loaded") + "\n")
     while True:
         try:
             line = input(ui.prompt())
@@ -102,8 +111,10 @@ def interactive(lang: Language) -> int:
             return 0
         if not line.strip():
             continue
+        start = time.perf_counter()
         try:
             show(translate(line, lang))
+            print(ui.timing(ui.ms(time.perf_counter() - start)))
         except MeduError as err:
             print(ui.error(err, "<prompt>", clean(line)))
         print()
@@ -112,10 +123,12 @@ def interactive(lang: Language) -> int:
 def main(argv: list[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
     ui.setup()
+    start = time.perf_counter()
     lang = languages.load("medumba")
+    load = time.perf_counter() - start
     if argv:
-        return translate_file(argv[0], lang)
-    return interactive(lang)
+        return translate_file(argv[0], lang, load)
+    return interactive(lang, load)
 
 
 if __name__ == "__main__":

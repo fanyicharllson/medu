@@ -22,11 +22,11 @@ VSVersionInfo(
   ffi=FixedFileInfo(filevers={tuple(nums)}, prodvers={tuple(nums)}),
   kids=[
     StringFileInfo([StringTable('040904B0', [
-      StringStruct('CompanyName', 'Charllson'),
+      StringStruct('CompanyName', 'CharlseEmpire Tech'),
       StringStruct('FileDescription', 'Medu - compiler for Medumba'),
       StringStruct('FileVersion', '{version}'),
       StringStruct('InternalName', 'medu'),
-      StringStruct('LegalCopyright', 'Copyright (c) 2026 Charllson. GPL-3.0.'),
+      StringStruct('LegalCopyright', 'Copyright (c) 2026 Charllson & Adrien Tello. GPL-3.0.'),
       StringStruct('OriginalFilename', 'medu.exe'),
       StringStruct('ProductName', 'Medu'),
       StringStruct('ProductVersion', '{version}')])]),
