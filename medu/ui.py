@@ -64,9 +64,9 @@ def _enable_windows_ansi() -> None:
 def setup(color: bool | None = None) -> None:
     """Call once at start-up. color=None decides automatically."""
     global _color
-    for stream in (sys.stdout, sys.stderr):
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
         try:
-            stream.reconfigure(encoding="utf-8")
+            stream.reconfigure(encoding="utf-8-sig" if stream is sys.stdin else "utf-8")
         except (AttributeError, ValueError):
             pass
     if color is None:

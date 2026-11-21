@@ -1,0 +1,3 @@
+# Building the installer (see packaging/README.md)
+-r requirements-dev.txt
+pyinstaller>=6.0
