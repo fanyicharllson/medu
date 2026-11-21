@@ -14,7 +14,7 @@ Authors: **Charllson** (lead architect) and **Adrien Tello** (second lead develo
 
 You write Medumba in a text file and run `medu`, the same way you run `python`.
 
-![Medu in the terminal](docs/terminal-preview.png)
+![The Medu window](docs/medu-window-preview.png)
 
 ```text
 # story.mdt

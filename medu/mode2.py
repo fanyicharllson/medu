@@ -133,9 +133,10 @@ PROMPT_COMMANDS = {"exit", "quit", "help", "cls", "clear", "version"}
 
 
 def interactive(lang: Language, load_ms: float = 0.0, quiet: bool = False) -> int:
-    if not quiet:
-        print(ui.banner(lang.name))
-    print(ui.timing(f"Started in {ui.ms(load_ms)} · {len(lang.entries):,} words loaded") + "\n")
+    if quiet:
+        print(ui.timing(f"Started in {ui.ms(load_ms)} · {len(lang.entries):,} words loaded") + "\n")
+    else:
+        print(ui.welcome(lang.name, len(lang.entries), load_ms))
     notice = updater.UpdateNotice()          # quiet, background, offline-safe
     while True:
         if (msg := notice.message()):
@@ -154,7 +155,7 @@ def interactive(lang: Language, load_ms: float = 0.0, quiet: bool = False) -> in
             continue
         if command in ("cls", "clear"):
             ui.clear_screen()
-            print(ui.banner(lang.name))
+            print(ui.welcome(lang.name, len(lang.entries), load_ms))
             continue
         if command == "version":
             print(ui.version_text() + "\n")

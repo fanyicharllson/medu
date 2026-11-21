@@ -39,7 +39,7 @@ PrivilegesRequiredOverridesAllowed=dialog
 [Tasks]
 Name: "addtopath"; Description: "Add medu to PATH (use it from any terminal)"; Flags: checkedonce
 Name: "associate"; Description: "Open .med and .mdt files with Medu"; Flags: checkedonce
-Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
+Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:"
 
 [Files]
 Source: "..\dist\medu.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -48,8 +48,8 @@ Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\samples\*"; DestDir: "{app}\samples"; Flags: ignoreversion recursesubdirs
 
 [Icons]
-Name: "{group}\Medu (interactive)"; Filename: "{app}\medu.exe"
-Name: "{autodesktop}\Medu"; Filename: "{app}\medu.exe"; Tasks: desktopicon
+Name: "{group}\Medu"; Filename: "{app}\medu.exe"; Comment: "Medu: translate Medumba into English"
+Name: "{autodesktop}\Medu"; Filename: "{app}\medu.exe"; Comment: "Medu: translate Medumba into English"; Tasks: desktopicon
 Name: "{group}\Medu samples"; Filename: "{app}\samples"
 Name: "{group}\Uninstall Medu"; Filename: "{uninstallexe}"
 
@@ -61,14 +61,14 @@ Root: HKA; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; \
 Root: HKA; Subkey: "Software\Classes\.med"; ValueType: string; ValueData: "Medu.Program"; Flags: uninsdeletevalue; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\Medu.Program"; ValueType: string; ValueData: "Medu program"; Flags: uninsdeletekey; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\Medu.Program\DefaultIcon"; ValueType: string; ValueData: "{app}\medu.exe,0"; Tasks: associate
-Root: HKA; Subkey: "Software\Classes\Medu.Program\shell\open\command"; ValueType: string; ValueData: "cmd.exe /k ""{app}\medu.exe"" run ""%1"""; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\Medu.Program\shell\open\command"; ValueType: string; ValueData: """{app}\medu.exe"" run ""%1"""; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\.mdt"; ValueType: string; ValueData: "Medu.Text"; Flags: uninsdeletevalue; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\Medu.Text"; ValueType: string; ValueData: "Medumba text"; Flags: uninsdeletekey; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\Medu.Text\DefaultIcon"; ValueType: string; ValueData: "{app}\medu.exe,0"; Tasks: associate
-Root: HKA; Subkey: "Software\Classes\Medu.Text\shell\open\command"; ValueType: string; ValueData: "cmd.exe /k ""{app}\medu.exe"" translate ""%1"""; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\Medu.Text\shell\open\command"; ValueType: string; ValueData: """{app}\medu.exe"" translate ""%1"""; Tasks: associate
 
 [Run]
-Filename: "{cmd}"; Parameters: "/k ""{app}\medu.exe"""; Description: "Open Medu now"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\medu.exe"; Description: "Open Medu now"; Flags: postinstall nowait skipifsilent
 
 [Code]
 var

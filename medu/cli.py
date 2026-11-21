@@ -26,10 +26,9 @@ import difflib
 import os
 import sys
 import time
-import traceback
 from pathlib import Path
 
-from medu import languages, mode1, mode2, ui, updater
+from medu import languages, mode1, mode2, ui, updater, window
 from medu.cleaner import clean
 from medu.errors import MeduError
 
@@ -180,6 +179,7 @@ def _dispatch(argv: list[str]) -> int:
     color = False if "--no-color" in argv else None
     argv = [a for a in argv if a not in ("-q", "--quiet", "--no-color")]
     ui.setup(color)
+    window.brand()                         # only in Medu's own window
     if not argv:
         lang, load = _load()
         return mode2.interactive(lang, load, quiet)
@@ -218,7 +218,7 @@ def _dispatch(argv: list[str]) -> int:
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     try:
-        return _dispatch(argv)
+        code = _dispatch(argv)
     except KeyboardInterrupt:
         print()
         return 130
@@ -227,8 +227,10 @@ def main(argv: list[str] | None = None) -> int:
             raise
         print(ui.paint("Medu hit an unexpected problem.", ui.RED, ui.BOLD))
         print(ui.note(f"Please report it: {ui.REPO}/issues  (details: set MEDU_DEBUG=1)"))
-        traceback.print_exc(limit=0, file=open(os.devnull, "w"))
-        return 2
+        code = 2
+    if argv:                               # a double-clicked file: let them read it
+        window.keep_open()
+    return code
 
 
 if __name__ == "__main__":
