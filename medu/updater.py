@@ -77,14 +77,21 @@ def _get(url: str):
         return json.loads(resp.read().decode("utf-8"))
 
 
+last_problem = ""   # "not_found" or "offline": why the last fetch returned None
+
+
 def fetch_release(version: str | None = None) -> Release | None:
     """Latest release, or a given version. None when offline or not found."""
+    global last_problem
     try:
         if version:
             return _from_api(_get(f"{API}/tags/v{version.lstrip('v')}"))
         return _from_api(_get(f"{API}/latest"))
+    except urllib.error.HTTPError as err:
+        last_problem = "not_found" if err.code == 404 else "offline"
     except (urllib.error.URLError, OSError, ValueError, KeyError):
-        return None
+        last_problem = "offline"
+    return None
 
 
 def list_versions() -> list[str] | None:
@@ -178,6 +185,9 @@ def install(version: str | None = None, allow_older: bool = False) -> int:
             versions = list_versions()
             if versions:
                 print(ui.note("Available versions: " + ", ".join(versions)))
+        elif last_problem == "not_found":
+            print(ui.result(f"You have the newest Medu ({__version__}): no newer release is published."))
+            return 0
         else:
             print(ui.paint("No internet connection, or GitHub cannot be reached. Try again later.", ui.RED))
         return 1
