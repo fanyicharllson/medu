@@ -169,6 +169,9 @@ def welcome(language: str = "medumba", words: int = 0, load_seconds: float = 0.0
               row(paint("Medu ", BOLD) + paint(f"v{__version__}", OCHRE, BOLD)
                   + paint("  ·  ", DIM) + f"{name} → English", "center"),
               row(paint("the first compiler for the Medumba language", DIM), "center"),
+              row(),
+              row(paint(" MODE 2 ", "48;5;99", "38;5;231", BOLD) + paint(" SENTENCES ", "48;5;60", "38;5;231")
+                  + "  " + paint(" OFFLINE ", "48;5;65", "38;5;231", BOLD), "center"),
               row()]
     user = user_name()
     if user:

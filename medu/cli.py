@@ -174,12 +174,35 @@ def unknown(word: str) -> int:
 # Entry point
 # ---------------------------------------------------------------------------
 
+MODE_SENTENCES = "Mode 2 · Sentences → English"
+MODE_PROGRAMS = "Mode 1 · Programs"
+
+
+def _activity(argv: list[str]) -> str:
+    """What the title bar of the Medu window says for this command."""
+    if not argv:
+        return MODE_SENTENCES
+    command = ALIASES.get(argv[0].lower(), argv[0].lower())
+    target = Path(argv[1]).name if len(argv) > 1 else ""
+    if command in ("translate", "check") and target:
+        mode = MODE_PROGRAMS if target.lower().endswith(".med") else "Mode 2"
+        return f"{mode.split(' · ')[0]} · {'checking' if command == 'check' else 'translating'} {target}"
+    if command == "run":
+        return f"Mode 1 · running {target}" if target else MODE_PROGRAMS
+    if "." in argv[0]:
+        name = Path(argv[0]).name
+        return (f"Mode 1 · running {name}" if name.lower().endswith(".med")
+                else f"Mode 2 · translating {name}")
+    return {"help": "Help", "commands": "Commands", "version": "About",
+            "upgrade": "Upgrading", "downgrade": "Changing version"}.get(command, "")
+
+
 def _dispatch(argv: list[str]) -> int:
     quiet = any(a in ("-q", "--quiet") for a in argv)
     color = False if "--no-color" in argv else None
     argv = [a for a in argv if a not in ("-q", "--quiet", "--no-color")]
     ui.setup(color)
-    window.brand()                         # only in Medu's own window
+    window.brand(_activity(argv))          # only in Medu's own window
     if not argv:
         lang, load = _load()
         return mode2.interactive(lang, load, quiet)

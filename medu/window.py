@@ -108,13 +108,20 @@ def _set_font(k, handle) -> None:
             return
 
 
-def brand() -> bool:
-    """Style the window if it is Medu's own. Returns True when it did."""
+def title_for(activity: str = "") -> str:
+    """'Medu 1.0.0  ·  Mode 2 · Sentences → English'"""
+    from medu import __version__
+    return f"Medu {__version__}  ·  {activity}" if activity else f"Medu {__version__}  ·  {TITLE}"
+
+
+def brand(activity: str = "") -> bool:
+    """Style the window if it is Medu's own. Returns True when it did.
+    activity is shown in the title bar, e.g. 'Mode 2 · Sentences → English'."""
     if os.environ.get("MEDU_PLAIN_WINDOW") or not owns_console():
         return False
     k = _kernel32()
     try:
-        k.SetConsoleTitleW(TITLE)
+        k.SetConsoleTitleW(title_for(activity))
         handle = k.GetStdHandle(-11)
         _set_font(k, handle)
         _set_colours(k, handle)
