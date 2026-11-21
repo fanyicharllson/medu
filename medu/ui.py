@@ -167,11 +167,13 @@ def help_text(prompt_mode: bool = False) -> str:
     lines += [h("From a terminal")]
     for cmd, what in [("medu", "interactive prompt (medu>)"),
                       ("medu translate file.mdt", "translate Medumba sentences"),
-                      ("medu run file.med", "run a Medu program"),
+                      ("medu run file.med", "run a Medu program (Medu 2.0)"),
+                      ("medu check file", "only look for mistakes"),
                       ("medu upgrade", "install the newest version from GitHub"),
                       ("medu downgrade 1.0.0", "go back to an older version"),
                       ("medu -v, --version", "version"),
                       ("medu -h, --help", "this help"),
+                      ("medu commands", "every command and what it does"),
                       ("-q", "hide the banner, e.g. medu -q translate file.mdt")]:
         lines.append(f"  {c(cmd.ljust(25))} {what}")
     lines += ["",

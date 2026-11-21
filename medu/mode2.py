@@ -22,7 +22,7 @@ import sys
 import time
 from pathlib import Path
 
-from medu import checker_text, english, languages, meaning, parser_text, ui, updater
+from medu import checker_text, english, languages, meaning, parser_text, ui, updater  # noqa: F401
 from medu.cleaner import clean
 from medu.errors import MeduError
 from medu.languages import Language
@@ -171,45 +171,9 @@ def interactive(lang: Language, load_ms: float = 0.0, quiet: bool = False) -> in
 
 
 def main(argv: list[str] | None = None) -> int:
-    """medu [-q] [file.mdt | translate file.mdt | -v | --version | -h | --help | help]
-
-    Until cli.py is finished, this is also what a test medu.exe runs."""
-    argv = list(sys.argv[1:] if argv is None else argv)
-    ui.setup()
-    quiet = any(a in ("-q", "--quiet") for a in argv)
-    argv = [a for a in argv if a not in ("-q", "--quiet")]
-    first = argv[0].lower() if argv else ""
-    if first in ("-v", "--version", "version"):
-        print(ui.version_text())
-        return 0
-    if first in ("-h", "--help", "help", "/?"):
-        print(ui.banner("medumba", hint=False))
-        print(ui.help_text())
-        return 0
-    if first == "upgrade":
-        return updater.install(argv[1] if len(argv) > 1 else None)
-    if first == "downgrade":
-        if len(argv) < 2:
-            print(ui.paint("usage: medu downgrade <version>   e.g. medu downgrade 1.0.0", ui.OCHRE))
-            versions = updater.list_versions()
-            if versions:
-                print(ui.note("Available versions: " + ", ".join(versions)))
-            return 1
-        return updater.install(argv[1], allow_older=True)
-    if first == "run":
-        print(ui.paint("medu run (Mode 1 programs) is coming soon.", ui.OCHRE))
-        return 1
-    if first == "translate":
-        argv = argv[1:]
-        if not argv:
-            print(ui.paint("usage: medu translate file.mdt", ui.OCHRE))
-            return 1
-    start = time.perf_counter()
-    lang = languages.load("medumba")
-    load = time.perf_counter() - start
-    if argv:
-        return translate_file(argv[0], lang, load, quiet)
-    return interactive(lang, load, quiet)
+    """`python -m medu.mode2 ...` behaves exactly like the medu command."""
+    from medu import cli
+    return cli.main(argv)
 
 
 if __name__ == "__main__":
