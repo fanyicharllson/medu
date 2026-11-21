@@ -127,6 +127,75 @@ def banner(language: str = "medumba", hint: bool = True) -> str:
 
 REPO = "https://github.com/fanyicharllson/medu"
 
+# Logo gradient, top to bottom: light indigo -> deep indigo
+LOGO_SHADES = ["38;5;117", "38;5;111", "38;5;105", "38;5;99", "38;5;63"]
+FRAME = "38;5;60"
+
+
+def visible_len(text: str) -> int:
+    """Width on screen: no colour codes, tone marks take no space."""
+    import re
+    import unicodedata
+    plain = re.sub(r"\033\[[0-9;]*m", "", text)
+    return sum(1 for ch in plain if unicodedata.category(ch) != "Mn")
+
+
+def welcome(language: str = "medumba", words: int = 0, load_seconds: float = 0.0) -> str:
+    """The premium start screen of the interactive prompt: a framed card with
+    the logo, version, authors, examples to try and the main commands."""
+    width = 66
+    name = LANGUAGE_NAMES.get(language, language.title())
+
+    def row(content: str = "", align: str = "left") -> str:
+        gap = width - visible_len(content)
+        if align == "center":
+            left = gap // 2
+            content = " " * left + content + " " * (gap - left)
+        else:
+            content = content + " " * max(gap, 0)
+        return paint("│", FRAME) + content + paint("│", FRAME)
+
+    def rule(label: str = "") -> str:
+        if not label:
+            return paint("├" + "─" * width + "┤", FRAME)
+        text = f" {label} "
+        return (paint("├──", FRAME) + paint(text, OCHRE, BOLD)
+                + paint("─" * (width - 2 - len(text)) + "┤", FRAME))
+
+    lines = [paint("╭" + "─" * width + "╮", FRAME), row()]
+    for shade, art in zip(LOGO_SHADES, LOGO.strip("\n").split("\n")):
+        lines.append(row(paint(art, shade, BOLD), "center"))
+    lines += [row(),
+              row(paint("Medu ", BOLD) + paint(f"v{__version__}", OCHRE, BOLD)
+                  + paint("  ·  ", DIM) + f"{name} → English", "center"),
+              row(paint("the first compiler for the Medumba language", DIM), "center"),
+              row(),
+              row(paint(" MODE 2 ", "48;5;99", "38;5;231", BOLD) + paint(" SENTENCES ", "48;5;60", "38;5;231")
+                  + "  " + paint(" OFFLINE ", "48;5;65", "38;5;231", BOLD), "center"),
+              row()]
+    user = user_name()
+    if user:
+        lines += [row(paint(f"Welcome back, {user}!", GREEN, BOLD), "center"), row()]
+    lines.append(rule("Try"))
+    for medumba, english in (("mə nɛ̌n zi", "I am sleeping."),
+                             ("mə kə̀ jʉ", "I did not eat."),
+                             ("a yən mbʉ ki", "Did he/she see the dog?")):
+        lines.append(row("   " + paint(medumba.ljust(14 + len(medumba) - visible_len(medumba)),
+                                       OCHRE, BOLD)
+                         + paint("→  ", DIM) + paint(english, GREEN)))
+    lines.append(rule("Commands"))
+    cmds = [("help", "guide"), ("cls", "clear"), ("version", "about"), ("exit", "quit")]
+    lines.append(row("   " + "   ".join(paint(c, INDIGO, BOLD) + paint(f" {d}", DIM)
+                                         for c, d in cmds)))
+    lines.append(rule("Made by"))
+    lines.append(row("   " + paint(__company__, OCHRE, BOLD) + paint("  ·  ", DIM) + __authors__))
+    lines.append(row("   " + paint(REPO.replace("https://", ""), DIM)))
+    lines.append(paint("╰" + "─" * width + "╯", FRAME))
+    status = (paint("  ● ", GREEN) + paint("offline ready", DIM)
+              + paint("   ● ", INDIGO) + paint(f"{words:,} words", DIM)
+              + paint("   ● ", OCHRE) + paint(f"started in {ms(load_seconds)}", DIM))
+    return "\n".join(lines) + "\n" + status + "\n"
+
 
 def config_path():
     """%APPDATA%\\Medu\\config.json, written by the installer's 'About you' page."""
@@ -233,8 +302,8 @@ def ms(seconds: float) -> str:
 
 
 def timing(text: str) -> str:
-    """Spring Boot-style timing line:  ✓ Translated 13 sentences in 4.2 ms"""
-    return paint("✓ ", GREEN) + paint(text, DIM)
+    """Spring Boot-style timing line:  ▸ Translated 13 sentences in 4.2 ms"""
+    return paint("▸ ", GREEN) + paint(text, DIM)
 
 
 def prompt() -> str:

@@ -26,10 +26,9 @@ import difflib
 import os
 import sys
 import time
-import traceback
 from pathlib import Path
 
-from medu import languages, mode1, mode2, ui, updater
+from medu import languages, mode1, mode2, ui, updater, window
 from medu.cleaner import clean
 from medu.errors import MeduError
 
@@ -175,11 +174,35 @@ def unknown(word: str) -> int:
 # Entry point
 # ---------------------------------------------------------------------------
 
+MODE_SENTENCES = "Mode 2 · Sentences → English"
+MODE_PROGRAMS = "Mode 1 · Programs"
+
+
+def _activity(argv: list[str]) -> str:
+    """What the title bar of the Medu window says for this command."""
+    if not argv:
+        return MODE_SENTENCES
+    command = ALIASES.get(argv[0].lower(), argv[0].lower())
+    target = Path(argv[1]).name if len(argv) > 1 else ""
+    if command in ("translate", "check") and target:
+        mode = MODE_PROGRAMS if target.lower().endswith(".med") else "Mode 2"
+        return f"{mode.split(' · ')[0]} · {'checking' if command == 'check' else 'translating'} {target}"
+    if command == "run":
+        return f"Mode 1 · running {target}" if target else MODE_PROGRAMS
+    if "." in argv[0]:
+        name = Path(argv[0]).name
+        return (f"Mode 1 · running {name}" if name.lower().endswith(".med")
+                else f"Mode 2 · translating {name}")
+    return {"help": "Help", "commands": "Commands", "version": "About",
+            "upgrade": "Upgrading", "downgrade": "Changing version"}.get(command, "")
+
+
 def _dispatch(argv: list[str]) -> int:
     quiet = any(a in ("-q", "--quiet") for a in argv)
     color = False if "--no-color" in argv else None
     argv = [a for a in argv if a not in ("-q", "--quiet", "--no-color")]
     ui.setup(color)
+    window.brand(_activity(argv))          # only in Medu's own window
     if not argv:
         lang, load = _load()
         return mode2.interactive(lang, load, quiet)
@@ -218,7 +241,7 @@ def _dispatch(argv: list[str]) -> int:
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     try:
-        return _dispatch(argv)
+        code = _dispatch(argv)
     except KeyboardInterrupt:
         print()
         return 130
@@ -227,8 +250,10 @@ def main(argv: list[str] | None = None) -> int:
             raise
         print(ui.paint("Medu hit an unexpected problem.", ui.RED, ui.BOLD))
         print(ui.note(f"Please report it: {ui.REPO}/issues  (details: set MEDU_DEBUG=1)"))
-        traceback.print_exc(limit=0, file=open(os.devnull, "w"))
-        return 2
+        code = 2
+    if argv:                               # a double-clicked file: let them read it
+        window.keep_open()
+    return code
 
 
 if __name__ == "__main__":

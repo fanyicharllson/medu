@@ -39,7 +39,7 @@ PrivilegesRequiredOverridesAllowed=dialog
 [Tasks]
 Name: "addtopath"; Description: "Add medu to PATH (use it from any terminal)"; Flags: checkedonce
 Name: "associate"; Description: "Open .med and .mdt files with Medu"; Flags: checkedonce
-Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:"; Flags: unchecked
+Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription: "Shortcuts:"
 
 [Files]
 Source: "..\dist\medu.exe"; DestDir: "{app}"; Flags: ignoreversion
@@ -48,27 +48,34 @@ Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\samples\*"; DestDir: "{app}\samples"; Flags: ignoreversion recursesubdirs
 
 [Icons]
-Name: "{group}\Medu (interactive)"; Filename: "{app}\medu.exe"
-Name: "{autodesktop}\Medu"; Filename: "{app}\medu.exe"; Tasks: desktopicon
+Name: "{group}\Medu"; Filename: "{app}\medu.exe"; Comment: "Medu: translate Medumba into English"
+Name: "{autodesktop}\Medu"; Filename: "{app}\medu.exe"; Comment: "Medu: translate Medumba into English"; Tasks: desktopicon
 Name: "{group}\Medu samples"; Filename: "{app}\samples"
 Name: "{group}\Uninstall Medu"; Filename: "{uninstallexe}"
 
 [Registry]
-; PATH (current user or all users, depending on install mode)
-Root: HKA; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; \
-  ValueData: "{olddata};{app}"; Tasks: addtopath; Check: NeedsAddPath(ExpandConstant('{app}'))
+; PATH. Windows keeps it in two different places:
+;   one user  -> HKCU\Environment
+;   all users -> HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Environment
+; (HKLM\Environment does not exist: writing there fails with code 87)
+Root: HKCU; Subkey: "Environment"; ValueType: expandsz; ValueName: "Path"; \
+  ValueData: "{olddata};{app}"; Tasks: addtopath; \
+  Check: (not IsAdminInstallMode) and NeedsAddPath(ExpandConstant('{app}'))
+Root: HKLM; Subkey: "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"; \
+  ValueType: expandsz; ValueName: "Path"; ValueData: "{olddata};{app}"; Tasks: addtopath; \
+  Check: IsAdminInstallMode and NeedsAddPath(ExpandConstant('{app}'))
 ; .med = Medu program, .mdt = Medumba text; double-click opens a terminal that stays open
 Root: HKA; Subkey: "Software\Classes\.med"; ValueType: string; ValueData: "Medu.Program"; Flags: uninsdeletevalue; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\Medu.Program"; ValueType: string; ValueData: "Medu program"; Flags: uninsdeletekey; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\Medu.Program\DefaultIcon"; ValueType: string; ValueData: "{app}\medu.exe,0"; Tasks: associate
-Root: HKA; Subkey: "Software\Classes\Medu.Program\shell\open\command"; ValueType: string; ValueData: "cmd.exe /k ""{app}\medu.exe"" run ""%1"""; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\Medu.Program\shell\open\command"; ValueType: string; ValueData: """{app}\medu.exe"" run ""%1"""; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\.mdt"; ValueType: string; ValueData: "Medu.Text"; Flags: uninsdeletevalue; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\Medu.Text"; ValueType: string; ValueData: "Medumba text"; Flags: uninsdeletekey; Tasks: associate
 Root: HKA; Subkey: "Software\Classes\Medu.Text\DefaultIcon"; ValueType: string; ValueData: "{app}\medu.exe,0"; Tasks: associate
-Root: HKA; Subkey: "Software\Classes\Medu.Text\shell\open\command"; ValueType: string; ValueData: "cmd.exe /k ""{app}\medu.exe"" translate ""%1"""; Tasks: associate
+Root: HKA; Subkey: "Software\Classes\Medu.Text\shell\open\command"; ValueType: string; ValueData: """{app}\medu.exe"" translate ""%1"""; Tasks: associate
 
 [Run]
-Filename: "{cmd}"; Parameters: "/k ""{app}\medu.exe"""; Description: "Open Medu now"; Flags: postinstall nowait skipifsilent
+Filename: "{app}\medu.exe"; Description: "Open Medu now"; Flags: postinstall nowait skipifsilent
 
 [Code]
 var
@@ -102,10 +109,25 @@ begin
   Lines[0] := '{"name": "' + JsonEscape(Trim(NamePage.Values[0])) + '"}';
   SaveStringsToUTF8File(Dir + '\config.json', Lines, False);
 end;
+{ Where Windows keeps PATH for this kind of install }
+function PathRoot: Integer;
+begin
+  if IsAdminInstallMode then Result := HKEY_LOCAL_MACHINE
+  else Result := HKEY_CURRENT_USER;
+end;
+
+function PathKey: string;
+begin
+  if IsAdminInstallMode then
+    Result := 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment'
+  else
+    Result := 'Environment';
+end;
+
 function NeedsAddPath(Dir: string): Boolean;
 var Paths: string;
 begin
-  if not RegQueryStringValue(HKA, 'Environment', 'Path', Paths) then Paths := '';
+  if not RegQueryStringValue(PathRoot, PathKey, 'Path', Paths) then Paths := '';
   Result := Pos(';' + Uppercase(Dir) + ';', ';' + Uppercase(Paths) + ';') = 0;
 end;
 
@@ -114,11 +136,11 @@ var Paths, Dir: string; P: Integer;
 begin
   if CurUninstallStep <> usPostUninstall then Exit;
   Dir := ExpandConstant('{app}');
-  if RegQueryStringValue(HKA, 'Environment', 'Path', Paths) then begin
+  if RegQueryStringValue(PathRoot, PathKey, 'Path', Paths) then begin
     P := Pos(';' + Uppercase(Dir), Uppercase(Paths));
     if P > 0 then begin
       Delete(Paths, P, Length(Dir) + 1);
-      RegWriteExpandStringValue(HKA, 'Environment', 'Path', Paths);
+      RegWriteExpandStringValue(PathRoot, PathKey, 'Path', Paths);
     end;
   end;
 end;
